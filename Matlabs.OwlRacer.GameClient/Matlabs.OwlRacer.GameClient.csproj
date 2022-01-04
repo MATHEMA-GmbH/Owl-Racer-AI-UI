@@ -45,7 +45,7 @@
     <MonoGameContentReference Include="Content\Content.mgcb" />
   </ItemGroup>
   <ItemGroup>
-    <Protobuf Include="..\Protobuf\matlabs.owlracer.core.proto" Link="matlabs.owlracer.core.proto" GrpcServices="Client" />
+    <Protobuf Include="..\..\Protobuf\matlabs.owlracer.core.proto" Link="matlabs.owlracer.core.proto" GrpcServices="Client" />
   </ItemGroup>
   <ItemGroup>
     <TrimmerRootAssembly Include="Microsoft.Xna.Framework.Content.ContentTypeReader" Visible="false" />
@@ -71,7 +71,7 @@
     <PackageReference Include="SixLabors.ImageSharp" Version="1.0.3" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Matlabs.OwlRacer.Common\Matlabs.OwlRacer.Common.csproj" />
+    <ProjectReference Include="..\..\Matlabs.OwlRacer.Common\Matlabs.OwlRacer.Common.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Update="appsettings.json">
