@@ -599,7 +599,7 @@ namespace Matlabs.OwlRacer.GameClient.States
                         {
                             Logger.LogInformation($"Executing python script {mapping.File}");
                             var args = $"{mapping.File} --session={Game.Session.Id}";
-                            ExecuteScript(_pythonOptions.BinPath, args); //> venv?
+                            ExecuteScript(_pythonOptions.BinPath, args);
                         }
                     }
                 }
@@ -617,7 +617,7 @@ namespace Matlabs.OwlRacer.GameClient.States
                         if (OwlKeyboard.HasBeenPressed(key))
                         {
                             Logger.LogInformation($"Executing ML.NET {mapping.File}");
-                            var args = $"--model={mapping.File} --session={Game.Session.Id}";
+                            var args = $"--model={mapping.File} --session={Game.Session.Id} --carName={mapping.CarName} --carColor={mapping.CarColar}";
                             ExecuteScript(_mlNetOptions.BinPath, args); //> venv?
                         }
                     }
