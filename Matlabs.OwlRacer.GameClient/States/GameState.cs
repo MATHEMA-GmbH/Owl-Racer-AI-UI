@@ -358,7 +358,6 @@ namespace Matlabs.OwlRacer.GameClient.States
 
                 foreach (var newCar in newCars)
                 {
-                    var carData = _gameService.GetRaceCarDataAsync(newCar).Result;
 
                     if (!_isSpectator)
                     {
@@ -372,6 +371,7 @@ namespace Matlabs.OwlRacer.GameClient.States
                         {
                             try
                             {
+                                var carData = _gameService.GetRaceCarDataAsync(newCar).Result;
                                 newCar.Name = carData.Name;
                                 newCar.Color = carData.Color;
                                 _raceCarList.Add(newCar);
@@ -385,11 +385,13 @@ namespace Matlabs.OwlRacer.GameClient.States
                     }
                     else
                     {
-                        var name = carData.Name;
-                        var color = carData.Color;
-
+                        
                         try
                         {
+                            var carData = _gameService.GetRaceCarDataAsync(newCar).Result;
+                            var name = carData.Name;
+                            var color = carData.Color;
+
                             newCar.Name = name;
                             newCar.Color = color;
                             _raceCarList.Add(newCar);
@@ -597,7 +599,7 @@ namespace Matlabs.OwlRacer.GameClient.States
                         {
                             Logger.LogInformation($"Executing python script {mapping.File}");
                             var args = $"{mapping.File} --session={Game.Session.Id}";
-                            ExecuteScript(_pythonOptions.BinPath, args); //> venv?
+                            ExecuteScript(_pythonOptions.BinPath, args);
                         }
                     }
                 }
@@ -615,7 +617,7 @@ namespace Matlabs.OwlRacer.GameClient.States
                         if (OwlKeyboard.HasBeenPressed(key))
                         {
                             Logger.LogInformation($"Executing ML.NET {mapping.File}");
-                            var args = $"--model={mapping.File} --session={Game.Session.Id}";
+                            var args = $"--model={mapping.File} --session={Game.Session.Id} --carName={mapping.CarName} --carColor={mapping.CarColar}";
                             ExecuteScript(_mlNetOptions.BinPath, args); //> venv?
                         }
                     }
