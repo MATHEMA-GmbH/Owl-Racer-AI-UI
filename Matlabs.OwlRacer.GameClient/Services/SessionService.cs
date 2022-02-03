@@ -97,13 +97,38 @@ namespace Matlabs.OwlRacer.GameClient.Services
                         End = new VectorOptions((int)trackData.LinePositionEnd.X, (int)trackData.LinePositionEnd.Y)
                     }
                 },
-                Scores = sessionData.Scores.ToDictionary(x => new RaceCar(
-                    sessionId,
-                    Guid.Parse(x.CarId.GuidString),
-                    x.CarName,
-                    ""),
-                x => x.Score)
+                //Scores = sessionData.Scores.ToDictionary(x => new RaceCar(
+                //    sessionId,
+                //    Guid.Parse(x.CarId.GuidString),
+                //    x.CarName,
+                //   ""),
+                //x => x.Score)
+                Scores = UpdateScores(sessionData, sessionId)
             };
+        }
+
+        private Dictionary<RaceCar, int> UpdateScores(SessionData sessionData, Guid sessionId)
+        {
+            var Scores = sessionData.Scores.ToDictionary(x => new RaceCar(
+            sessionId,
+            Guid.Parse(x.CarId.GuidString),
+            x.CarName,
+            ""),
+            x => x.Score);
+
+            foreach (var car in Scores)
+            {
+                foreach (var score in sessionData.Scores)
+                {
+                    if (car.Key.Id.ToString() == score.CarId.GuidString)
+                    {
+                        car.Key.NumCrashes = score.NumCrashes;
+                        car.Key.NumRounds = score.NumRounds;
+                    }
+                }
+            }
+
+            return Scores;
         }
 
         public GuidListData GetSessionIds()

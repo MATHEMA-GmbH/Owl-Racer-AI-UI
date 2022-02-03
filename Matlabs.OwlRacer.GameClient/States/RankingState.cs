@@ -129,8 +129,12 @@ namespace Matlabs.OwlRacer.GameClient.States
 
 
             spriteBatch.DrawString(_font, "Exit Game (press Escape) ", new Vector2(xPos, yPos - 50), Color.Black);
-            spriteBatch.Draw(_background, new Rectangle(xPos - 10, yPos - 10, 600, sortedList.Count * 20 + 40), null, _corporateGray40, 0, new Vector2(0, 0), SpriteEffects.None, 0);
-            spriteBatch.DrawString(_font, "Ranking List ", new Vector2(xPos, yPos), Color.Black);
+            spriteBatch.Draw(_background, new Rectangle(xPos - 10, yPos - 10, 800, sortedList.Count * 20 + 40), null, _corporateGray40, 0, new Vector2(0, 0), SpriteEffects.None, 0);
+            spriteBatch.DrawString(_font, "Rank", new Vector2(xPos, yPos), Color.Black);
+            spriteBatch.DrawString(_font, "Name", new Vector2(xPos + 60, yPos), Color.Black);
+            spriteBatch.DrawString(_font, "Score", new Vector2(xPos + 360, yPos), Color.Black);
+            spriteBatch.DrawString(_font, "Crashes", new Vector2(xPos + 550, yPos), Color.Black);
+            spriteBatch.DrawString(_font, "Rounds", new Vector2(xPos + 650, yPos), Color.Black);
             var ranking = 1;
 
             foreach (var car in sortedList)
@@ -138,6 +142,8 @@ namespace Matlabs.OwlRacer.GameClient.States
                 spriteBatch.DrawString(_font, ranking.ToString(), new Vector2(xPos, yPos + 20), Color.Black);
                 spriteBatch.DrawString(_font, car.Key.Name , new Vector2(xPos + 60, yPos + 20), Color.Black);
                 spriteBatch.DrawString(_font, car.Value.ToString(), new Vector2(xPos + 360, yPos + 20), Color.Black);
+                spriteBatch.DrawString(_font, car.Key.NumCrashes.ToString(), new Vector2(xPos + 550, yPos + 20), Color.Black);
+                spriteBatch.DrawString(_font, car.Key.NumRounds.ToString(), new Vector2(xPos + 650, yPos + 20), Color.Black);
                 ranking += 1;
                 yPos += 20;
             }
