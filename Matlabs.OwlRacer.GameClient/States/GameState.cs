@@ -661,10 +661,9 @@ namespace Matlabs.OwlRacer.GameClient.States
                    // mlProcess.OutputDataReceived += MlProcess_OutputDataReceived;
                 }
             }
-            catch (Exception e)
+            catch
             {
-                Logger.LogInformation("Could not start ML Algorithm because of Error: ");
-                Logger.LogInformation(e.ToString());
+                Logger.LogInformation("Could not start ML Algorithm");
             }
         }
 
