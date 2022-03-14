@@ -481,7 +481,7 @@ namespace Matlabs.OwlRacer.GameClient.States
 
             if (sessionName.Length == 0)
             {
-                sessionName = "MyGame" + rnd.NextDouble().ToString();
+                sessionName = "Game";
             }
             
             Game.Session = _clientService.CreateSession(GameTimeSetting, _trackNum, sessionName);
@@ -576,8 +576,7 @@ namespace Matlabs.OwlRacer.GameClient.States
 
             if (_playerButton.Text.Length == 0)
             {
-                Random rnd = new Random();
-                raceCarName = "car_" + rnd.NextDouble().ToString();
+                raceCarName = "You";
             }
             else
             {

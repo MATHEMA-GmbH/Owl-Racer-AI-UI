@@ -616,9 +616,10 @@ namespace Matlabs.OwlRacer.GameClient.States
 
                         if (OwlKeyboard.HasBeenPressed(key))
                         {
+                            var path = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), _mlNetOptions.BinPath));
                             Logger.LogInformation($"Executing ML.NET {mapping.File}");
                             var args = $"--model={mapping.File} --session={Game.Session.Id} --carName={mapping.CarName} --carColor={mapping.CarColar}";
-                            ExecuteScript(_mlNetOptions.BinPath, args); //> venv?
+                            ExecuteScript(path, args); //> venv?
                         }
                     }
                 }
@@ -660,9 +661,10 @@ namespace Matlabs.OwlRacer.GameClient.States
                    // mlProcess.OutputDataReceived += MlProcess_OutputDataReceived;
                 }
             }
-            catch
+            catch (Exception e)
             {
                 Logger.LogInformation("Could not start ML Algorithm");
+                Logger.LogInformation(e.ToString());
             }
         }
 
