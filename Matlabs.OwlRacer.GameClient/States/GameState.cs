@@ -664,7 +664,6 @@ namespace Matlabs.OwlRacer.GameClient.States
             catch (Exception e)
             {
                 Logger.LogInformation("Could not start ML Algorithm");
-                Logger.LogInformation(e.ToString());
             }
         }
 
