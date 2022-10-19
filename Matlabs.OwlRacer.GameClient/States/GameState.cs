@@ -618,7 +618,7 @@ namespace Matlabs.OwlRacer.GameClient.States
                         {
                             var path = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), _mlNetOptions.BinPath));
                             Logger.LogInformation($"Executing ML.NET {mapping.File}");
-                            var args = $"--model={mapping.File} --session={Game.Session.Id} --carName={mapping.CarName} --carColor={mapping.CarColar}";
+                            var args = $"--model={mapping.File} --session={Game.Session.Id} --carName={mapping.CarName} --carColor={mapping.CarColor} --version={mapping.Version}";
                             ExecuteScript(path, args); //> venv?
                         }
                     }
