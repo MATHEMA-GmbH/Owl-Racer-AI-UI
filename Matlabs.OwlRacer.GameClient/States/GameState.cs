@@ -598,7 +598,7 @@ namespace Matlabs.OwlRacer.GameClient.States
                         if (OwlKeyboard.HasBeenPressed(key))
                         {
                             Logger.LogInformation($"Executing python script {mapping.File}");
-                            var args = $"{mapping.File} --session={Game.Session.Id}";
+                            var args = $"{mapping.File} --session={Game.Session.Id} --carName={mapping.CarName} --carColor={mapping.CarColor} --model={mapping.Model}";
                             ExecuteScript(_pythonOptions.BinPath, args);
                         }
                     }
