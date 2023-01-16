@@ -36,7 +36,7 @@ namespace Matlabs.OwlRacer.GameClient.Controls
         //Primary
         private Color _corporateRed = new Color(197, 0, 62);
 
-        //Gray
+        //Grey
         private Color _corporateGray20 = new Color(217, 217, 214);
         private Color _corporateGray40 = new Color(187, 188, 188);
         private Color _corporateGray60 = new Color(136, 139, 141);

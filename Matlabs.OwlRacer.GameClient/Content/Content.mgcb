@@ -20,8 +20,13 @@
 /processorParam:TextureFormat=Color
 /build:File.spritefont;DejaVuSansMono.spritefont;
 /build:Inter-SemiBold.spritefont
+/build:Inter-SemiBold-small.spritefont
+/build:Inter-SemiBold-very-small.spritefont
+/build:Inter-SemiBold-big.spritefont
 /build:Inter-Regular.spritefont
 /build:Inter-Regular-small.spritefont
+/build:Inter-Regular-big.spritefont
+/build:Inter-Regular-very-small.spritefont
 
 #begin Images/Button.png
 /importer:TextureImporter
@@ -50,3 +55,7 @@
 /build:Images/level0.png
 /build:Images/level1.png
 /build:Images/level2.png
+/build:Images/mat-pictogram-rgb-dark.png
+/build:Images/mat-pictogram-rgb-black.png
+/build:Images/ButtonLeft.png
+/build:Images/ButtonRight.png

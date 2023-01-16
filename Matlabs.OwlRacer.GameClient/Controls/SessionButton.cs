@@ -28,6 +28,9 @@ namespace Matlabs.OwlRacer.GameClient.Controls
 
         public int NumClicked { get; set; }
 
+        public int Width { get; set; }
+        public int Height { get; set; }
+
         //Corporate Colors
         //Primary
         private Color _corporateRed = new Color(197, 0, 62);
@@ -48,7 +51,7 @@ namespace Matlabs.OwlRacer.GameClient.Controls
         {
             get
             {
-                return new Rectangle((int)Position.X, (int)Position.Y, _texture.Width, _texture.Height);
+                return new Rectangle((int)Position.X, (int)Position.Y, Width, Height);
             }
         }
 
