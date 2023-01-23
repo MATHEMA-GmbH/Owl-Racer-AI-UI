@@ -20,13 +20,8 @@
 /processorParam:TextureFormat=Color
 /build:File.spritefont;DejaVuSansMono.spritefont;
 /build:Inter-SemiBold.spritefont
-/build:Inter-SemiBold-small.spritefont
-/build:Inter-SemiBold-very-small.spritefont
-/build:Inter-SemiBold-big.spritefont
 /build:Inter-Regular.spritefont
 /build:Inter-Regular-small.spritefont
-/build:Inter-Regular-big.spritefont
-/build:Inter-Regular-very-small.spritefont
 
 #begin Images/Button.png
 /importer:TextureImporter
