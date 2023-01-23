@@ -700,6 +700,10 @@ namespace Matlabs.OwlRacer.GameClient.States
                 {
                     button.Text = button.Text.Remove(button.Text.Length - 1);
                 } 
+                else if(pressed[0].ToString() == "Space" && button.Text.Length > 0)
+                {
+                    button.Text = button.Text + " ";
+                }
                 
                 //filter condition for keyboard numbers 0-9
                 //Number 0 is stored as D0 etc.
@@ -709,7 +713,7 @@ namespace Matlabs.OwlRacer.GameClient.States
                     pressedNumber = pressedNumber.Remove(0,1);
                     button.Text = button.Text + pressedNumber;
                 }
-                else if (pressed[0].ToString() != "Back")
+                else if (pressed[0].ToString() != "Back" && pressed[0].ToString() != "Space")
                 {
                     button.Text = button.Text + pressed[0].ToString();
                 }
@@ -913,6 +917,7 @@ namespace Matlabs.OwlRacer.GameClient.States
 
             // Adding exception for back button
             legitKeys.Add("Back");
+            legitKeys.Add("Space");
 
 
             return legitKeys;
