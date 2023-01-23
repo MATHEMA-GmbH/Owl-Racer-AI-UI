@@ -380,7 +380,7 @@ namespace Matlabs.OwlRacer.GameClient.States
             if (_oldSessionCount != _newSessionCount)
             {
                 _totalPageNumber = (int)Math.Ceiling((double)(_availableSessions.Guids.Count) / (double)(_pageSize));
-                _pageButton.Text = _currentPageNumber + "/" + _totalPageNumber;
+                _pageButton.Text = "Page: " + _currentPageNumber + "/" + _totalPageNumber;
             }
 
 
@@ -880,13 +880,13 @@ namespace Matlabs.OwlRacer.GameClient.States
         private void previousPageButton_Click(object sender, EventArgs e)
         {
             _currentPageNumber = Math.Max(1, _currentPageNumber - 1);
-            _pageButton.Text = _currentPageNumber + "/" + _totalPageNumber;
+            _pageButton.Text = "Page: " + _currentPageNumber + "/" + _totalPageNumber;
             _previousPageButton.Clicked = true;
         }
         private void nextPageButton_Click(object sender, EventArgs e)
         {
             _currentPageNumber = Math.Min(_currentPageNumber + 1, _totalPageNumber); 
-            _pageButton.Text = _currentPageNumber + "/" + _totalPageNumber;
+            _pageButton.Text = "Page: " + _currentPageNumber + "/" + _totalPageNumber;
             _nextPageButton.Clicked = true;
 
         }
