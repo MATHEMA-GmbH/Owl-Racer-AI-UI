@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Matlabs.OwlRacer.GameClient.States.Layout
 {
-    public static class layoutUtility
+    public static class LayoutUtility
     {
         public static int screenWidth;
         public static int screenHeight;

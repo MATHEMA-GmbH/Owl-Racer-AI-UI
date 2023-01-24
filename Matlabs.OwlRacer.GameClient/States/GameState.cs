@@ -158,8 +158,8 @@ namespace Matlabs.OwlRacer.GameClient.States
             _scaleFactor = (float)Math.Min(_scaleX,_scaleY);
 
             //Fixed size Values for buttons and text lines
-            _buttonHeight = layoutUtility.heightPx(1);
-            _buttonWidth = layoutUtility.widthPx(1);
+            _buttonHeight = LayoutUtility.heightPx(1);
+            _buttonWidth = LayoutUtility.widthPx(1);
             _textLineHeight = (int)((float)_font.MeasureString("A").Y * _scaleFactor);
 
             _logFilePath = Path.Join(Directory.GetCurrentDirectory(), "capture");
@@ -220,7 +220,7 @@ namespace Matlabs.OwlRacer.GameClient.States
             _circle = Content.Load<Texture2D>(@"Images/Circle");
             _street = Content.Load<Texture2D>(@"Images/Street");
             _startPos = new VectorOptions((int)(GraphicsDevice.Adapter.CurrentDisplayMode.Width*0.01), (int)((GraphicsDevice.Adapter.CurrentDisplayMode.Height - _trackHeight - _logo.Height/3)*0.5));
-            _posInfo = new VectorOptions((int)(_trackWidth + layoutUtility.widthPx(0.1)), 20);
+            _posInfo = new VectorOptions((int)(_trackWidth + LayoutUtility.widthPx(0.1)), 20);
             _startLinePos = Game.Session.RaceTrack.StartLine;
         }
 
@@ -289,13 +289,13 @@ namespace Matlabs.OwlRacer.GameClient.States
             int logoRectMathemaWidth = (int)((double)_logoMathema.Width * 0.1 * _scaleX);
             int logoRectMathemaHeight = (int)((double)_logoMathema.Height * 0.1 * _scaleY);
 
-            int logoRectCircleWidth = layoutUtility.circleWidth();
+            int logoRectCircleWidth = LayoutUtility.circleWidth();
             int logoRectCircleHeight = logoRectCircleWidth;
 
 
-            Rectangle logoRectMathema = new Rectangle(layoutUtility.bottomRightXValue(), layoutUtility.bottomRightYValue(2), logoRectMathemaWidth, logoRectMathemaHeight);
-            Rectangle logoRect = new Rectangle(layoutUtility.bottomRightXValue(), layoutUtility.bottomRightYValue(0), logoRectWidth, logoRectHeight);
-            Rectangle logoRectCircle = new Rectangle(layoutUtility.screenWidth - logoRectCircleWidth, layoutUtility.screenHeight - logoRectCircleHeight, logoRectCircleWidth, logoRectCircleHeight);
+            Rectangle logoRectMathema = new Rectangle(LayoutUtility.bottomRightXValue(), LayoutUtility.bottomRightYValue(2), logoRectMathemaWidth, logoRectMathemaHeight);
+            Rectangle logoRect = new Rectangle(LayoutUtility.bottomRightXValue(), LayoutUtility.bottomRightYValue(0), logoRectWidth, logoRectHeight);
+            Rectangle logoRectCircle = new Rectangle(LayoutUtility.screenWidth - logoRectCircleWidth, LayoutUtility.screenHeight - logoRectCircleHeight, logoRectCircleWidth, logoRectCircleHeight);
 
             Rectangle logoRectStreet1 = new Rectangle(0, GraphicsDevice.Adapter.CurrentDisplayMode.Height - 8 * GraphicsDevice.Adapter.CurrentDisplayMode.Height / _street.Height,
                 GraphicsDevice.Adapter.CurrentDisplayMode.Width, _street.Height * GraphicsDevice.Adapter.CurrentDisplayMode.Height / 8);
@@ -304,7 +304,7 @@ namespace Matlabs.OwlRacer.GameClient.States
             spriteBatch.Draw(_circle, logoRectCircle, Color.White);
             spriteBatch.Draw(_logo, logoRect, Color.White);
 
-            spriteBatch.DrawString(_fontSmall, "EIN PROJEKT DER", layoutUtility.bottomRightVectorPosXY(1), _corporateGray60, (float)0.0, new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
+            spriteBatch.DrawString(_fontSmall, "EIN PROJEKT DER", LayoutUtility.bottomRightVectorPosXY(1), _corporateGray60, (float)0.0, new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
             spriteBatch.Draw(_logoMathema, logoRectMathema, Color.White);
 
             spriteBatch.DrawString(_font, $"Session: {Game.Session.Name}", new Vector2(_trackWidth / 2 - 40, 20), Color.Black,(float)0.0,new Vector2(0,0), _scaleFactor, SpriteEffects.None, (float)0.0);
@@ -352,7 +352,7 @@ namespace Matlabs.OwlRacer.GameClient.States
 
             spriteBatch.Draw(
                 _startPhaseTextures[phase],
-                new Rectangle(11*fontWidth, 10, layoutUtility.widthPx(0.25), layoutUtility.heightPx(1)),
+                new Rectangle(11*fontWidth, 10, LayoutUtility.widthPx(0.25), LayoutUtility.heightPx(1)),
                 Color.White);
         }
 

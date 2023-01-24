@@ -31,7 +31,7 @@ namespace Matlabs.OwlRacer.GameClient.Controls
         public int Width { get; set; }
         public int Height { get; set; }
 
-        private float scale;
+        private float _scale;
 
         //Corporate Colors
         //Primary
@@ -70,7 +70,11 @@ namespace Matlabs.OwlRacer.GameClient.Controls
 
             NumClicked = 0;
 
-            this.scale = scale;
+            this._scale = scale;
+
+            this.Width = _texture.Width;
+
+            this.Height= _texture.Height;
             
         }
 
@@ -92,10 +96,10 @@ namespace Matlabs.OwlRacer.GameClient.Controls
 
             if (!string.IsNullOrEmpty(Text))
             {
-                var x = (Rectangle.X + (Rectangle.Width / 2)) - (_font.MeasureString(Text).X * scale / 2);
-                var y = (Rectangle.Y + (Rectangle.Height / 2)) - (_font.MeasureString(Text).Y * scale  / 2);
+                var x = (Rectangle.X + (Rectangle.Width / 2)) - (_font.MeasureString(Text).X * _scale / 2);
+                var y = (Rectangle.Y + (Rectangle.Height / 2)) - (_font.MeasureString(Text).Y * _scale  / 2);
 
-                spriteBatch.DrawString(_font, Text, new Vector2(x, y), PenColour, (float)0.0, new Vector2(0,0), scale, SpriteEffects.None, (float)0.0);
+                spriteBatch.DrawString(_font, Text, new Vector2(x, y), PenColour, (float)0.0, new Vector2(0,0), _scale, SpriteEffects.None, (float)0.0);
             }
         }
 

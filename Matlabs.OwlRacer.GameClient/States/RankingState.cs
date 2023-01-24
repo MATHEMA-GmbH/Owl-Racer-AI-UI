@@ -69,8 +69,8 @@ namespace Matlabs.OwlRacer.GameClient.States
             _font = Content.Load<SpriteFont>("Inter-SemiBold");
             _fontSmall = Content.Load<SpriteFont>("Inter-Regular-small");
             _session = _sessionService.GetSession(Game.Session.Id);
-            _scaleX = ((float)layoutUtility.screenWidth / (float)1920);
-            _scaleY = ((float)layoutUtility.screenHeight/ (float)1200);
+            _scaleX = ((float)LayoutUtility.screenWidth / (float)1920);
+            _scaleY = ((float)LayoutUtility.screenHeight/ (float)1200);
             _scaleFactor = (float)(Math.Min(_scaleX,_scaleY));
 
         }
@@ -96,17 +96,17 @@ namespace Matlabs.OwlRacer.GameClient.States
             int logoRectMathemaWidth = (int)((double)_logoMathema.Width * 0.1 * _scaleX);
             int logoRectMathemaHeight = (int)((double)_logoMathema.Height * 0.1 * _scaleY);
 
-            int logoRectCircleWidth = layoutUtility.circleWidth();
+            int logoRectCircleWidth = LayoutUtility.circleWidth();
             int logoRectCircleHeight = logoRectCircleWidth;
 
 
-            Rectangle logoRectMathema = new Rectangle(layoutUtility.bottomRightXValue(), layoutUtility.bottomRightYValue(2),
+            Rectangle logoRectMathema = new Rectangle(LayoutUtility.bottomRightXValue(), LayoutUtility.bottomRightYValue(2),
             logoRectMathemaWidth, logoRectMathemaHeight);
             
-            Rectangle logoRect = new Rectangle(layoutUtility.bottomRightXValue(), layoutUtility.bottomRightYValue(0),
+            Rectangle logoRect = new Rectangle(LayoutUtility.bottomRightXValue(), LayoutUtility.bottomRightYValue(0),
             logoRectWidth, logoRectHeight);
             
-            Rectangle logoRectCircle = new Rectangle((int)(layoutUtility.screenWidth -logoRectCircleWidth), layoutUtility.screenHeight - logoRectCircleHeight, logoRectCircleWidth, logoRectCircleHeight);
+            Rectangle logoRectCircle = new Rectangle((int)(LayoutUtility.screenWidth -logoRectCircleWidth), LayoutUtility.screenHeight - logoRectCircleHeight, logoRectCircleWidth, logoRectCircleHeight);
             
             Rectangle logoRectStreet1 = new Rectangle(0, GraphicsDevice.Adapter.CurrentDisplayMode.Height - 8 * GraphicsDevice.Adapter.CurrentDisplayMode.Height / _street.Height,
                 GraphicsDevice.Adapter.CurrentDisplayMode.Width, _street.Height * GraphicsDevice.Adapter.CurrentDisplayMode.Height / 8);
@@ -115,7 +115,7 @@ namespace Matlabs.OwlRacer.GameClient.States
             spriteBatch.Draw(_circle, logoRectCircle, Color.White);
             spriteBatch.Draw(_logo, logoRect, Color.White);
 
-            spriteBatch.DrawString(_fontSmall, "EIN PROJEKT DER", layoutUtility.bottomRightVectorPosXY(1), _corporateGray60, (float)0.0, new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
+            spriteBatch.DrawString(_fontSmall, "EIN PROJEKT DER", LayoutUtility.bottomRightVectorPosXY(1), _corporateGray60, (float)0.0, new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
             spriteBatch.Draw(_logoMathema, logoRectMathema, Color.White);
 
 
@@ -152,8 +152,8 @@ namespace Matlabs.OwlRacer.GameClient.States
             double scoreBorderLeftRight = 0.01;
 
             //Pixel values for Scoreboard
-            int scoreBoardBorderTopPx = (int)(scoreBorderTop * layoutUtility.screenHeight);
-            int scoreBoardBorderLeftRightPx = (int)(scoreBorderLeftRight* layoutUtility.screenWidth);
+            int scoreBoardBorderTopPx = (int)(scoreBorderTop * LayoutUtility.screenHeight);
+            int scoreBoardBorderLeftRightPx = (int)(scoreBorderLeftRight* LayoutUtility.screenWidth);
             int scoreBoardColumnWidthPx = (int)((double)_font.MeasureString("01234567890123456789").X * _scaleFactor);
             int scoreBoardLineHeightPx = (int)((double)_font.MeasureString("A").Y * _scaleFactor);
             
