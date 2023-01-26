@@ -28,6 +28,11 @@ namespace Matlabs.OwlRacer.GameClient.Controls
 
         public int NumClicked { get; set; }
 
+        public int Width { get; set; }
+        public int Height { get; set; }
+
+        private float _scale;
+
         //Corporate Colors
         //Primary
         private Color _corporateRed = new Color(197, 0, 62);
@@ -48,14 +53,14 @@ namespace Matlabs.OwlRacer.GameClient.Controls
         {
             get
             {
-                return new Rectangle((int)Position.X, (int)Position.Y, _texture.Width, _texture.Height);
+                return new Rectangle((int)Position.X, (int)Position.Y, Width, Height);
             }
         }
 
         public string Text { get; set; }
         public string SessionId { get; set; }
 
-        public SessionButton(Texture2D texture, SpriteFont font)
+        public SessionButton(Texture2D texture, SpriteFont font, float scale)
         {
             _texture = texture;
 
@@ -64,6 +69,13 @@ namespace Matlabs.OwlRacer.GameClient.Controls
             PenColour = Color.Black;
 
             NumClicked = 0;
+
+            this._scale = scale;
+
+            this.Width = _texture.Width;
+
+            this.Height= _texture.Height;
+            
         }
 
         public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
@@ -84,10 +96,10 @@ namespace Matlabs.OwlRacer.GameClient.Controls
 
             if (!string.IsNullOrEmpty(Text))
             {
-                var x = (Rectangle.X + (Rectangle.Width / 2)) - (_font.MeasureString(Text).X / 2);
-                var y = (Rectangle.Y + (Rectangle.Height / 2)) - (_font.MeasureString(Text).Y / 2);
+                var x = (Rectangle.X + (Rectangle.Width / 2)) - (_font.MeasureString(Text).X * _scale / 2);
+                var y = (Rectangle.Y + (Rectangle.Height / 2)) - (_font.MeasureString(Text).Y * _scale  / 2);
 
-                spriteBatch.DrawString(_font, Text, new Vector2(x, y), PenColour);
+                spriteBatch.DrawString(_font, Text, new Vector2(x, y), PenColour, (float)0.0, new Vector2(0,0), _scale, SpriteEffects.None, (float)0.0);
             }
         }
 

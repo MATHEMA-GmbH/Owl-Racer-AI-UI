@@ -6,7 +6,9 @@ using System.IO;
 using System.Linq;
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using DocumentFormat.OpenXml.Drawing.Charts;
 using DocumentFormat.OpenXml.Spreadsheet;
 using Grpc.Core;
 using Grpc.Net.Client;
@@ -15,6 +17,7 @@ using Matlabs.OwlRacer.Common.Options;
 using Matlabs.OwlRacer.GameClient.Controls;
 using Matlabs.OwlRacer.GameClient.Services;
 using Matlabs.OwlRacer.GameClient.Services.Interface;
+using Matlabs.OwlRacer.GameClient.States.Layout;
 using Matlabs.OwlRacer.GameClient.States.Options;
 using Matlabs.OwlRacer.Protobuf;
 using Microsoft.Extensions.Logging;
@@ -97,6 +100,18 @@ namespace Matlabs.OwlRacer.GameClient.States
 
         private readonly ILogger<GameState> _logger;
 
+        private string _logFilePath;
+
+
+        //UI scaling
+        private double _scaleY;
+        private double _scaleX;
+        private float _scaleFactor;
+        
+        //Fixed pixel lengths for elements
+        private int _buttonHeight;
+        private int _buttonWidth;
+        private int _textLineHeight;
 
         public GameState(
             OwlRacerGame game,
@@ -124,16 +139,33 @@ namespace Matlabs.OwlRacer.GameClient.States
         {
             base.Initialize(graphicsDevice, content, options);
 
+            _font = Content.Load<SpriteFont>("Inter-SemiBold");
+            _fontSmall = Content.Load<SpriteFont>("Inter-Regular-small");
+            _buttonFont = Content.Load<SpriteFont>("Inter-Regular");
+
+
             _isSpectator = Game.IsSpectator;
 
             _components = new List<Component>(){};
 
             _numPlayers = 0;
 
-            var path = Path.Join(Directory.GetCurrentDirectory(), "capture");
-            if (!Directory.Exists(path))
+            _dataWriter = null;
+
+            //Calculating parameters for UI-scaling
+            _scaleX = ((float)(GraphicsDevice.Adapter.CurrentDisplayMode.Width) / (float)1920);
+            _scaleY = ((float)(GraphicsDevice.Adapter.CurrentDisplayMode.Height) / (float)1200);
+            _scaleFactor = (float)Math.Min(_scaleX,_scaleY);
+
+            //Fixed size Values for buttons and text lines
+            _buttonHeight = LayoutUtility.heightPx(1);
+            _buttonWidth = LayoutUtility.widthPx(1);
+            _textLineHeight = (int)((float)_font.MeasureString("A").Y * _scaleFactor);
+
+            _logFilePath = Path.Join(Directory.GetCurrentDirectory(), "capture");
+            if (!Directory.Exists(_logFilePath))
             {
-                Directory.CreateDirectory(path);
+                Directory.CreateDirectory(_logFilePath);
             }
 
             if (!_isSpectator)
@@ -143,8 +175,6 @@ namespace Matlabs.OwlRacer.GameClient.States
                 _raceCarList.Add(_raceCar);
                 Logger.LogInformation($"---> RaceCar successfully created (ID={_raceCar.Id}, name={_raceCar.Name}, color={_raceCar.Color}");
                 
-                _dataWriter = File.AppendText(Path.Join(path, $"{_raceCar.Id}.txt"));
-                _dataWriter.WriteLine("Id;IsCrashed;MaxVelocity;Position.X;Position.Y;PreviousCheckpoint;Rotation;Score;ScoreOverall;Ticks;Velocity;Distance.Front;Distance.FrontLeft;Distance.FrontRight;Distance.Left;Distance.Right;stepCommand");
             }
         }
 
@@ -152,9 +182,6 @@ namespace Matlabs.OwlRacer.GameClient.States
         {
             _buttonTextureRed = Content.Load<Texture2D>("Images/ButtonRedMini");
             _buttonTexture = Content.Load<Texture2D>("Images/Button");
-            _buttonFont = Content.Load<SpriteFont>("Inter-Regular");
-            _font = Content.Load<SpriteFont>("Inter-SemiBold");
-            _fontSmall = Content.Load<SpriteFont>("Inter-Regular-small");
             _raceCarNameFont = Content.Load<SpriteFont>("Inter-Regular-small");
 
             var rawBaseImageData = _resourceService.GetBaseImageDataAsync().Result;
@@ -193,7 +220,7 @@ namespace Matlabs.OwlRacer.GameClient.States
             _circle = Content.Load<Texture2D>(@"Images/Circle");
             _street = Content.Load<Texture2D>(@"Images/Street");
             _startPos = new VectorOptions((int)(GraphicsDevice.Adapter.CurrentDisplayMode.Width*0.01), (int)((GraphicsDevice.Adapter.CurrentDisplayMode.Height - _trackHeight - _logo.Height/3)*0.5));
-            _posInfo = new VectorOptions((int)((GraphicsDevice.Adapter.CurrentDisplayMode.Width-_trackWidth)*2.05), 20 );
+            _posInfo = new VectorOptions((int)(_trackWidth + LayoutUtility.widthPx(0.1)), 20);
             _startLinePos = Game.Session.RaceTrack.StartLine;
         }
 
@@ -256,14 +283,19 @@ namespace Matlabs.OwlRacer.GameClient.States
                 component.Draw(gameTime, spriteBatch);
             }
 
-            //Rectangle logoRect = new Rectangle(GraphicsDevice.Adapter.CurrentDisplayMode.Width - (_logo.Width/3), GraphicsDevice.Adapter.CurrentDisplayMode.Height - (_logo.Height/3),
-            //    _logo.Width / 3, _logo.Height / 3);
-            Rectangle logoRect = new Rectangle((int) (GraphicsDevice.Adapter.CurrentDisplayMode.Width - _logo.Width*0.56), (int)(GraphicsDevice.Adapter.CurrentDisplayMode.Height -  _circle.Height/3), (int)( _logo.Width*0.53), (int)(_logo.Height*0.53));
-            Rectangle logoRectCircle = new Rectangle(GraphicsDevice.Adapter.CurrentDisplayMode.Width - _circle.Width/3*2, (GraphicsDevice.Adapter.CurrentDisplayMode.Height - _circle.Height/2),
-                _circle.Width/3*2, _circle.Height/2);
+            int logoRectWidth = (int)((double)_logo.Width * 0.3 * _scaleX);
+            int logoRectHeight = (int)((double)_logo.Height * 0.3 * _scaleY);
 
-            Rectangle logoRectMathema = new Rectangle((int)(GraphicsDevice.Adapter.CurrentDisplayMode.Width - (_logoMathema.Width * 0.2)), (int)(GraphicsDevice.Adapter.CurrentDisplayMode.Height - _circle.Height / 3 + logoRect.Height * 1.9),
-               (int)(_logoMathema.Width * 0.15), (int)(_logoMathema.Height * 0.15));
+            int logoRectMathemaWidth = (int)((double)_logoMathema.Width * 0.1 * _scaleX);
+            int logoRectMathemaHeight = (int)((double)_logoMathema.Height * 0.1 * _scaleY);
+
+            int logoRectCircleWidth = LayoutUtility.circleWidth();
+            int logoRectCircleHeight = logoRectCircleWidth;
+
+
+            Rectangle logoRectMathema = new Rectangle(LayoutUtility.bottomRightXValue(), LayoutUtility.bottomRightYValue(2), logoRectMathemaWidth, logoRectMathemaHeight);
+            Rectangle logoRect = new Rectangle(LayoutUtility.bottomRightXValue(), LayoutUtility.bottomRightYValue(0), logoRectWidth, logoRectHeight);
+            Rectangle logoRectCircle = new Rectangle(LayoutUtility.screenWidth - logoRectCircleWidth, LayoutUtility.screenHeight - logoRectCircleHeight, logoRectCircleWidth, logoRectCircleHeight);
 
             Rectangle logoRectStreet1 = new Rectangle(0, GraphicsDevice.Adapter.CurrentDisplayMode.Height - 8 * GraphicsDevice.Adapter.CurrentDisplayMode.Height / _street.Height,
                 GraphicsDevice.Adapter.CurrentDisplayMode.Width, _street.Height * GraphicsDevice.Adapter.CurrentDisplayMode.Height / 8);
@@ -272,10 +304,10 @@ namespace Matlabs.OwlRacer.GameClient.States
             spriteBatch.Draw(_circle, logoRectCircle, Color.White);
             spriteBatch.Draw(_logo, logoRect, Color.White);
 
-            spriteBatch.DrawString(_fontSmall, "EIN PROJEKT DER", new Vector2((int)(GraphicsDevice.Adapter.CurrentDisplayMode.Width - (logoRectCircle.Width / 2)), (int)(GraphicsDevice.Adapter.CurrentDisplayMode.Height - _circle.Height / 3 + logoRect.Height*1.3)), _corporateGray60);
+            spriteBatch.DrawString(_fontSmall, "EIN PROJEKT DER", LayoutUtility.bottomRightVectorPosXY(1), _corporateGray60, (float)0.0, new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
             spriteBatch.Draw(_logoMathema, logoRectMathema, Color.White);
 
-            spriteBatch.DrawString(_font, $"Session: {Game.Session.Name}", new Vector2(_trackWidth / 2 - 40, 20), Color.Black);
+            spriteBatch.DrawString(_font, $"Session: {Game.Session.Name}", new Vector2(_trackWidth / 2 - 40, 20), Color.Black,(float)0.0,new Vector2(0,0), _scaleFactor, SpriteEffects.None, (float)0.0);
 
             //DrawRankingText(spriteBatch, 10, 300, _raceCarList);
 
@@ -313,13 +345,14 @@ namespace Matlabs.OwlRacer.GameClient.States
 
         private void DrawStartPhase(SpriteBatch spriteBatch)
         {
-            spriteBatch.DrawString(_font, $"{(Game.Session.GameTime.Ticks < 0 ? "-": "")} {Math.Abs(Game.Session.GameTime.Minutes)}:{Math.Abs(Game.Session.GameTime.Seconds)}.{Math.Abs(Game.Session.GameTime.Milliseconds)}", new Vector2(10, 10), Color.Black);
+            int fontWidth = (int)(_font.MeasureString("A").X*_scaleFactor);
+            spriteBatch.DrawString(_font, $"{(Game.Session.GameTime.Ticks < 0 ? "-": "")} {Math.Abs(Game.Session.GameTime.Minutes)}:{Math.Abs(Game.Session.GameTime.Seconds)}.{Math.Abs(Game.Session.GameTime.Milliseconds)}", new Vector2(10, 10), Color.Black,(float)0.0,new Vector2(0,0), _scaleFactor,SpriteEffects.None, (float)0.0);
 
             var phase = Game.Session.HasRaceStarted ? 0 : Math.Clamp(Math.Abs(Game.Session.GameTime.Seconds - 1), 0, 3);
 
             spriteBatch.Draw(
                 _startPhaseTextures[phase],
-                new Rectangle(150, 10, 120, 46),
+                new Rectangle(11*fontWidth, 10, LayoutUtility.widthPx(0.25), LayoutUtility.heightPx(1)),
                 Color.White);
         }
 
@@ -433,7 +466,14 @@ namespace Matlabs.OwlRacer.GameClient.States
                 stepCommand = GetKeyboardStepCommand(keyState, stepCommand);
 
                 // mit logger in csv schreiben...
-                if (_capture)
+                if (_capture && _dataWriter is null)
+                {
+                    _dataWriter = File.AppendText(Path.Join(_logFilePath, $"{_raceCar.Id}.txt"));
+                    _dataWriter.WriteLine("Id;IsCrashed;MaxVelocity;Position.X;Position.Y;PreviousCheckpoint;Rotation;Score;ScoreOverall;Ticks;Velocity;Distance.Front;Distance.FrontLeft;Distance.FrontRight;Distance.Left;Distance.Right;stepCommand");
+                    _dataWriter.WriteLine(GetMessage(_raceCar, stepCommand));
+                    _dataWriter.Flush();
+                }
+                else if(_capture && _dataWriter != null)
                 {
                     _dataWriter.WriteLine(GetMessage(_raceCar, stepCommand));
                     _dataWriter.Flush();
@@ -741,22 +781,22 @@ namespace Matlabs.OwlRacer.GameClient.States
                 { 
                     xPos = _posInfo.X;
                     //spriteBatch.DrawString(_font, $"You are driving Racecar: {raceCar.Name} (ID={_raceCar.Id})", new Vector2(xPos, yPos), Color.Black);
-                    spriteBatch.DrawString(_font, $"You are driving Racecar: {raceCar.Name}", new Vector2(xPos, yPos), Color.Black);
+                    spriteBatch.DrawString(_font, $"You are driving Racecar: {raceCar.Name}", new Vector2(xPos, yPos), Color.Black,(float)0.0,new Vector2(0,0), _scaleFactor, SpriteEffects.None, (float)0.0);
                     DrawCarStatistics(spriteBatch, raceCar, xPos, yPos);
                 }   
                 else if (raceCar != _raceCar)
                 {
                     xPos = _posInfo.X;
                     //spriteBatch.DrawString(_font, $"Racecar: {raceCar.Name} (ID={_raceCar.Id})", new Vector2(xPos, yPos), Color.Black);
-                    spriteBatch.DrawString(_font, $"Racecar: {raceCar.Name}", new Vector2(xPos, yPos+140), Color.Black);
-                    DrawCarStatistics(spriteBatch, raceCar, xPos, yPos+140);
+                    spriteBatch.DrawString(_font, $"Racecar: {raceCar.Name}", new Vector2(xPos, yPos+ 6 * _textLineHeight), Color.Black,(float)0.0, new Vector2(0,0), _scaleFactor, SpriteEffects.None, (float)0.0);
+                    DrawCarStatistics(spriteBatch, raceCar, xPos, yPos+ 6 * _textLineHeight);
                 }
             }
             else
             {
                 xPos = _posInfo.X;
-                spriteBatch.DrawString(_font, $"Racecar: {raceCar.Name}", new Vector2(xPos, yPos+140), Color.Black);
-                DrawCarStatistics(spriteBatch, raceCar, xPos, yPos+140);
+                spriteBatch.DrawString(_font, $"Racecar: {raceCar.Name}", new Vector2(xPos, yPos+ 6 * _textLineHeight), Color.Black, (float)0.0, new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
+                DrawCarStatistics(spriteBatch, raceCar, xPos, yPos + 6 * _textLineHeight) ;
             }
         }
 
@@ -795,10 +835,10 @@ namespace Matlabs.OwlRacer.GameClient.States
 
         private void DrawCarStatistics(SpriteBatch spriteBatch, RaceCar raceCar, int xPos, int yPos)
         {
-            spriteBatch.DrawString(_font, "Score:      " + raceCar.ScoreOverall.ToString(), new Vector2(xPos, yPos + 20), Color.Black);
-            spriteBatch.DrawString(_font, "Checkpoint (Position on Track): " + raceCar.Checkpoint.ToString(), new Vector2(xPos, yPos + 40), Color.Black);
-            spriteBatch.DrawString(_font, "Num Rounds:  " + raceCar.NumRounds, new Vector2(xPos, yPos + 60), Color.Black);
-            spriteBatch.DrawString(_font, "Num Crashes:  " + raceCar.NumCrashes, new Vector2(xPos, yPos + 80), Color.Black);
+            spriteBatch.DrawString(_font, "Score:      " + raceCar.ScoreOverall.ToString(), new Vector2(xPos, yPos + _textLineHeight), Color.Black, (float)0.0, new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
+            spriteBatch.DrawString(_font, "Checkpoint (Position on Track): " + raceCar.Checkpoint.ToString(), new Vector2(xPos, yPos + 2 * _textLineHeight), Color.Black, (float)0.0, new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
+            spriteBatch.DrawString(_font, "Num Rounds:  " + raceCar.NumRounds, new Vector2(xPos, yPos + 3 * _textLineHeight), Color.Black, (float)0.0, new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
+            spriteBatch.DrawString(_font, "Num Crashes:  " + raceCar.NumCrashes, new Vector2(xPos, yPos + 4 * _textLineHeight), Color.Black, (float)0.0, new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
         }
 
 
@@ -839,10 +879,13 @@ namespace Matlabs.OwlRacer.GameClient.States
             {
                 _numPlayers = _raceCarList.Count;
                 _components.Clear();
-                var pos_y = _posInfo.Y + 260;
+                var pos_y = Math.Max(_startPos.Y, _posInfo.Y + _textLineHeight * 13);
+                //var pos_y = _posInfo.Y + _textLineHeight * 13;
                 var pos_x = _posInfo.X;
-                var pos_y_2 = _posInfo.Y + 260;
-                var pos_x_2 = _posInfo.X + _buttonTextureRed.Width + 5;
+                var pos_y_2 = Math.Max(_startPos.Y, _posInfo.Y + _textLineHeight * 13);
+
+                //var pos_y_2 = _posInfo.Y + 260;
+                var pos_x_2 = _posInfo.X + _buttonWidth + _buttonWidth/10;
 
                 foreach (var car in _raceCarList)
                 {
@@ -857,12 +900,12 @@ namespace Matlabs.OwlRacer.GameClient.States
                             if (pos_y + 350 < GraphicsDevice.Adapter.CurrentDisplayMode.Height - _street.Height)
                             {
                                 DrawSingleRaceCarButton(pos_x, pos_y, car);
-                                pos_y += 50;
+                                pos_y += _buttonHeight + _buttonHeight / 5;
                             }
                             else
                             {
                                 DrawSingleRaceCarButton(pos_x_2, pos_y_2, car);
-                                pos_y_2 += 50;
+                                pos_y_2 += _buttonHeight + _buttonHeight / 5;
                             }  
                         }
                     }
@@ -871,23 +914,25 @@ namespace Matlabs.OwlRacer.GameClient.States
                         if (pos_y + 350 < GraphicsDevice.Adapter.CurrentDisplayMode.Height - _street.Height)
                         {
                             DrawSingleRaceCarButton(pos_x, pos_y, car);
-                            pos_y += 50;
+                            pos_y += _buttonHeight + _buttonHeight / 5;
                         }
                         else
                         {
                             DrawSingleRaceCarButton(pos_x_2, pos_y_2, car);
-                            pos_y_2 += 50;
+                            pos_y_2 += _buttonHeight + _buttonHeight / 5;
                         }
                     }
                 }
 
                 if (_raceCarList.Count > 1 || _isSpectator == true)
                 {
-                    var raceCarClearButton = new Button(_buttonTexture, _buttonFont)
+                    var raceCarClearButton = new Button(_buttonTexture, _buttonFont, _scaleFactor)
                     {
-                        Position = new Vector2(pos_x + 45, pos_y + 10),
+                        Position = new Vector2(pos_x, pos_y),
                         Text = "CLEAR",
-                        ButtonColor = Color.White
+                        ButtonColor = Color.White,
+                        Width = _buttonWidth,
+                        Height = _buttonHeight,
                     };
                     raceCarClearButton.Click += RaceCarClearButton_Click;
                     _components.Add(raceCarClearButton);
@@ -897,11 +942,13 @@ namespace Matlabs.OwlRacer.GameClient.States
 
         private void DrawSingleRaceCarButton(int pos_x, int pos_y, RaceCar car)
         {
-            var raceCarButton = new RaceCarButton(_buttonTextureRed, _buttonFont)
+            var raceCarButton = new RaceCarButton(_buttonTextureRed, _buttonFont, _scaleFactor)
             {
                 Position = new Vector2(pos_x, pos_y),
                 Text = car.Name,
-                RaceCarId = car.Id.ToString()
+                RaceCarId = car.Id.ToString(),
+                Height = _buttonHeight,
+                Width = _buttonWidth,
             };
 
             raceCarButton.Click += RaceCarButton_Click;

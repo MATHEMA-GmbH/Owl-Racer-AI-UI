@@ -18,6 +18,8 @@ namespace Matlabs.OwlRacer.GameClient.Controls
 
         private Texture2D _texture;
 
+        private float scale;
+
         public event EventHandler Click;
 
         public bool Clicked { get; set; }
@@ -36,7 +38,7 @@ namespace Matlabs.OwlRacer.GameClient.Controls
         //Primary
         private Color _corporateRed = new Color(197, 0, 62);
 
-        //Gray
+        //Grey
         private Color _corporateGray20 = new Color(217, 217, 214);
         private Color _corporateGray40 = new Color(187, 188, 188);
         private Color _corporateGray60 = new Color(136, 139, 141);
@@ -58,7 +60,7 @@ namespace Matlabs.OwlRacer.GameClient.Controls
 
         public string Text { get; set; }
 
-        public Button(Texture2D texture, SpriteFont font)
+        public Button(Texture2D texture, SpriteFont font, float scale)
         {
             _texture = texture;
 
@@ -67,7 +69,7 @@ namespace Matlabs.OwlRacer.GameClient.Controls
             PenColour = Color.Black;
             Width = _texture.Width;
             Height = _texture.Height;
-
+            this.scale = scale;
         }
 
         public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
@@ -105,12 +107,13 @@ namespace Matlabs.OwlRacer.GameClient.Controls
 
             if (!string.IsNullOrEmpty(Text))
             {
-                var x = (Rectangle.X + (Rectangle.Width / 2)) - (_font.MeasureString(Text).X / 2);
-                var y = (Rectangle.Y + (Rectangle.Height / 2)) - (_font.MeasureString(Text).Y / 2);
+                var x = (Rectangle.X + (Rectangle.Width / 2)) - (_font.MeasureString(Text).X*scale / 2);
+                var y = (Rectangle.Y + (Rectangle.Height / 2)) - (_font.MeasureString(Text).Y*scale / 2);
 
-                spriteBatch.DrawString(_font, Text, new Vector2(x, y), PenColour);
+                spriteBatch.DrawString(_font, Text, new Vector2(x, y), PenColour, (float)0.0, new Vector2(0, 0), scale, SpriteEffects.None, (float)0.0);
             }
         }
+
 
         public override void Update(GameTime gameTime)
         {

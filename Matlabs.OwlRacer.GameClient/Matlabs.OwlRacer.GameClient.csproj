@@ -116,5 +116,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="capture\" />
+    <Folder Include="Helper\" />
   </ItemGroup>
 </Project>

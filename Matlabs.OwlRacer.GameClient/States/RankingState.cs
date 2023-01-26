@@ -1,6 +1,7 @@
 ﻿using Matlabs.OwlRacer.Common.Model;
 using Matlabs.OwlRacer.GameClient.Services;
 using Matlabs.OwlRacer.GameClient.Services.Interface;
+using Matlabs.OwlRacer.GameClient.States.Layout;
 using Matlabs.OwlRacer.GameClient.States.Options;
 using Microsoft.Extensions.Logging;
 using Microsoft.Xna.Framework;
@@ -43,6 +44,12 @@ namespace Matlabs.OwlRacer.GameClient.States
         private Color _corporateGray60 = new Color(136, 139, 141);
         private Color _corporateGray40 = new Color(187, 188, 188);
 
+
+        // UI scaling
+        private double _scaleY;
+        private double _scaleX;
+        private float _scaleFactor;
+
         public RankingState(
             OwlRacerGame game,
             ILogger<RankingState> logger,
@@ -62,6 +69,10 @@ namespace Matlabs.OwlRacer.GameClient.States
             _font = Content.Load<SpriteFont>("Inter-SemiBold");
             _fontSmall = Content.Load<SpriteFont>("Inter-Regular-small");
             _session = _sessionService.GetSession(Game.Session.Id);
+            _scaleX = ((float)LayoutUtility.screenWidth / (float)1920);
+            _scaleY = ((float)LayoutUtility.screenHeight/ (float)1200);
+            _scaleFactor = (float)(Math.Min(_scaleX,_scaleY));
+
         }
 
         public override void LoadContent(GameTime gameTime)
@@ -79,13 +90,24 @@ namespace Matlabs.OwlRacer.GameClient.States
         {
             spriteBatch.Begin();
 
-            Rectangle logoRect = new Rectangle((int)(GraphicsDevice.Adapter.CurrentDisplayMode.Width - _logo.Width * 0.56), (int)(GraphicsDevice.Adapter.CurrentDisplayMode.Height - _circle.Height / 3), (int)(_logo.Width * 0.53), (int)(_logo.Height * 0.53));
-            Rectangle logoRectCircle = new Rectangle(GraphicsDevice.Adapter.CurrentDisplayMode.Width - _circle.Width / 3 * 2, (GraphicsDevice.Adapter.CurrentDisplayMode.Height - _circle.Height / 2),
-                _circle.Width / 3 * 2, _circle.Height / 2);
+            int logoRectWidth = (int)((double)_logo.Width * 0.3 * _scaleX);
+            int logoRectHeight = (int)((double)_logo.Height * 0.3 * _scaleY);
 
-            Rectangle logoRectMathema = new Rectangle((int)(GraphicsDevice.Adapter.CurrentDisplayMode.Width - (_logoMathema.Width * 0.2)), (int)(GraphicsDevice.Adapter.CurrentDisplayMode.Height - _circle.Height / 3 + logoRect.Height * 1.9),
-               (int)(_logoMathema.Width * 0.15), (int)(_logoMathema.Height * 0.15));
+            int logoRectMathemaWidth = (int)((double)_logoMathema.Width * 0.1 * _scaleX);
+            int logoRectMathemaHeight = (int)((double)_logoMathema.Height * 0.1 * _scaleY);
 
+            int logoRectCircleWidth = LayoutUtility.circleWidth();
+            int logoRectCircleHeight = logoRectCircleWidth;
+
+
+            Rectangle logoRectMathema = new Rectangle(LayoutUtility.bottomRightXValue(), LayoutUtility.bottomRightYValue(2),
+            logoRectMathemaWidth, logoRectMathemaHeight);
+            
+            Rectangle logoRect = new Rectangle(LayoutUtility.bottomRightXValue(), LayoutUtility.bottomRightYValue(0),
+            logoRectWidth, logoRectHeight);
+            
+            Rectangle logoRectCircle = new Rectangle((int)(LayoutUtility.screenWidth -logoRectCircleWidth), LayoutUtility.screenHeight - logoRectCircleHeight, logoRectCircleWidth, logoRectCircleHeight);
+            
             Rectangle logoRectStreet1 = new Rectangle(0, GraphicsDevice.Adapter.CurrentDisplayMode.Height - 8 * GraphicsDevice.Adapter.CurrentDisplayMode.Height / _street.Height,
                 GraphicsDevice.Adapter.CurrentDisplayMode.Width, _street.Height * GraphicsDevice.Adapter.CurrentDisplayMode.Height / 8);
 
@@ -93,7 +115,7 @@ namespace Matlabs.OwlRacer.GameClient.States
             spriteBatch.Draw(_circle, logoRectCircle, Color.White);
             spriteBatch.Draw(_logo, logoRect, Color.White);
 
-            spriteBatch.DrawString(_fontSmall, "EIN PROJEKT DER", new Vector2((int)(GraphicsDevice.Adapter.CurrentDisplayMode.Width - (logoRectCircle.Width / 2)), (int)(GraphicsDevice.Adapter.CurrentDisplayMode.Height - _circle.Height / 3 + logoRect.Height * 1.3)), _corporateGray60);
+            spriteBatch.DrawString(_fontSmall, "EIN PROJEKT DER", LayoutUtility.bottomRightVectorPosXY(1), _corporateGray60, (float)0.0, new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
             spriteBatch.Draw(_logoMathema, logoRectMathema, Color.White);
 
 
@@ -123,29 +145,67 @@ namespace Matlabs.OwlRacer.GameClient.States
         {
             var sortedList = _session.Scores.OrderByDescending(o => o.Value).ToList();
 
-            int xPos = GraphicsDevice.Adapter.CurrentDisplayMode.Width/2 - 600/2;
-            int yPos = GraphicsDevice.Adapter.CurrentDisplayMode.Height / 2 - (sortedList.Count * 20 + 60)/2;
+            //General scoreboard parameters
+            int columnindex = 0;
+            int maxColumnIndex = 5;
+            double scoreBorderTop = 0.01;
+            double scoreBorderLeftRight = 0.01;
+
+            //Pixel values for Scoreboard
+            int scoreBoardBorderTopPx = (int)(scoreBorderTop * LayoutUtility.screenHeight);
+            int scoreBoardBorderLeftRightPx = (int)(scoreBorderLeftRight* LayoutUtility.screenWidth);
+            int scoreBoardColumnWidthPx = (int)((double)_font.MeasureString("01234567890123456789").X * _scaleFactor);
+            int scoreBoardLineHeightPx = (int)((double)_font.MeasureString("A").Y * _scaleFactor);
+            
+            //Pixel Values for overall Scoreboard
+            int scoreBoardWidth = maxColumnIndex * scoreBoardColumnWidthPx + 2 * scoreBoardBorderLeftRightPx;
+            int scoreBoardHeight = (sortedList.Count + 1) * scoreBoardLineHeightPx + 2 * scoreBoardBorderTopPx;
+
+            // Initial position on the x and y Axis
+            // Values are set so that the scoreboard appears in the middle of the screen
+            int xPos = GraphicsDevice.Adapter.CurrentDisplayMode.Width/2 - scoreBoardWidth/2;
+            int yPos = GraphicsDevice.Adapter.CurrentDisplayMode.Height / 2 - scoreBoardHeight/2;
+            
+            
             //_startPos = new StartPosition(GraphicsDevice.Adapter.CurrentDisplayMode.Width / 2 - _trackWidth / 2, GraphicsDevice.Adapter.CurrentDisplayMode.Height / 2 - _trackHeight / 2);
 
 
-            spriteBatch.DrawString(_font, "Exit Game (press Escape) ", new Vector2(xPos, yPos - 50), Color.Black);
-            spriteBatch.Draw(_background, new Rectangle(xPos - 10, yPos - 10, 800, sortedList.Count * 20 + 40), null, _corporateGray40, 0, new Vector2(0, 0), SpriteEffects.None, 0);
-            spriteBatch.DrawString(_font, "Rank", new Vector2(xPos, yPos), Color.Black);
-            spriteBatch.DrawString(_font, "Name", new Vector2(xPos + 60, yPos), Color.Black);
-            spriteBatch.DrawString(_font, "Score", new Vector2(xPos + 360, yPos), Color.Black);
-            spriteBatch.DrawString(_font, "Crashes", new Vector2(xPos + 550, yPos), Color.Black);
-            spriteBatch.DrawString(_font, "Rounds", new Vector2(xPos + 650, yPos), Color.Black);
+            Rectangle scoreBoardBackground = new Rectangle(xPos - scoreBoardBorderLeftRightPx, yPos - scoreBoardBorderTopPx, scoreBoardWidth, scoreBoardHeight);
+            spriteBatch.Draw(_background, scoreBoardBackground, null, _corporateGray40, 0, new Vector2(0, 0), SpriteEffects.None, 0);
+            
+            //Header above scoreboard            
+            spriteBatch.DrawString(_font, "Exit Game (press Escape) ", new Vector2(xPos, yPos - (scoreBoardBorderTopPx + scoreBoardLineHeightPx)), Color.Black, (float)0.0, new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
+
+            // Column Headers
+            spriteBatch.DrawString(_font, "Rank", new Vector2(xPos + columnindex * scoreBoardColumnWidthPx , yPos), Color.Black, (float)0.0, new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
+            columnindex++;
+            spriteBatch.DrawString(_font, "Name", new Vector2(xPos + columnindex * scoreBoardColumnWidthPx, yPos), Color.Black, (float)0.0, new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
+            columnindex++;
+            spriteBatch.DrawString(_font, "Score", new Vector2(xPos + columnindex * scoreBoardColumnWidthPx, yPos), Color.Black, (float)0.0, new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
+            columnindex++;
+            spriteBatch.DrawString(_font, "Crashes", new Vector2(xPos + columnindex * scoreBoardColumnWidthPx, yPos), Color.Black, (float)0.0, new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
+            columnindex++;
+            spriteBatch.DrawString(_font, "Rounds", new Vector2(xPos + columnindex * scoreBoardColumnWidthPx, yPos), Color.Black, (float)0.0, new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
+            columnindex=0;
+
+            //Drawing actual Ranking
             var ranking = 1;
+            yPos += scoreBoardLineHeightPx;
 
             foreach (var car in sortedList)
             {
-                spriteBatch.DrawString(_font, ranking.ToString(), new Vector2(xPos, yPos + 20), Color.Black);
-                spriteBatch.DrawString(_font, car.Key.Name , new Vector2(xPos + 60, yPos + 20), Color.Black);
-                spriteBatch.DrawString(_font, car.Value.ToString(), new Vector2(xPos + 360, yPos + 20), Color.Black);
-                spriteBatch.DrawString(_font, car.Key.NumCrashes.ToString(), new Vector2(xPos + 550, yPos + 20), Color.Black);
-                spriteBatch.DrawString(_font, car.Key.NumRounds.ToString(), new Vector2(xPos + 650, yPos + 20), Color.Black);
+                spriteBatch.DrawString(_font, ranking.ToString(), new Vector2(xPos, yPos), Color.Black, (float)0.0, new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
+                columnindex++;
+                spriteBatch.DrawString(_font, car.Key.Name , new Vector2(xPos + columnindex * scoreBoardColumnWidthPx, yPos), Color.Black, (float)0.0, new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
+                columnindex++;
+                spriteBatch.DrawString(_font, car.Value.ToString(), new Vector2(xPos + columnindex * scoreBoardColumnWidthPx, yPos ), Color.Black, (float)0.0, new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
+                columnindex++;
+                spriteBatch.DrawString(_font, car.Key.NumCrashes.ToString(), new Vector2(xPos + columnindex * scoreBoardColumnWidthPx, yPos), Color.Black, (float)0.0, new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
+                columnindex++;
+                spriteBatch.DrawString(_font, car.Key.NumRounds.ToString(), new Vector2(xPos + columnindex * scoreBoardColumnWidthPx, yPos), Color.Black, (float)0.0, new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
+                columnindex=0;
                 ranking += 1;
-                yPos += 20;
+                yPos += scoreBoardLineHeightPx;
             }
         }
     }
