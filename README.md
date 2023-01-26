@@ -34,4 +34,6 @@ Note however, that the UI client is merely a tool to give developers a visual re
 
 The communication between the UI client and the server is realized using a (Web-)gRPC channel.
 
+The UI currently supports Resolutions above 1920 x 1200.
+
 For more details on the total project read [here](https://github.com/MATHEMA-GmbH/Owl-Racer-AI).
