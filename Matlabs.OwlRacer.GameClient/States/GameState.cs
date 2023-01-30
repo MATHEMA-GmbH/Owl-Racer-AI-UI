@@ -113,6 +113,9 @@ namespace Matlabs.OwlRacer.GameClient.States
         private int _buttonWidth;
         private int _textLineHeight;
 
+        //DarkMode
+        private bool _darkMode;
+
         public GameState(
             OwlRacerGame game,
             ILogger<GameState> logger,
@@ -151,6 +154,8 @@ namespace Matlabs.OwlRacer.GameClient.States
             _numPlayers = 0;
 
             _dataWriter = null;
+
+            _darkMode = false;
 
             //Calculating parameters for UI-scaling
             _scaleX = ((float)(GraphicsDevice.Adapter.CurrentDisplayMode.Width) / (float)1920);
@@ -228,15 +233,28 @@ namespace Matlabs.OwlRacer.GameClient.States
         {
             spriteBatch.Begin();
 
-            spriteBatch.Draw(_background, new Rectangle(_startPos.X, _startPos.Y, _trackWidth, _trackHeight), null, _corporateGray60, 0, new Vector2(0, 0), SpriteEffects.None, 0);
+            //Color values used for normal mode
+            Color backgroundColor = _corporateGray60;
+            Color raceTrackFilter = Color.White;
+            
+            //If clause to enable darkMode options
+            if(_darkMode)
+            {
+                backgroundColor = Color.Black;
+                raceTrackFilter = Color.Black;
+            }
+
+
+            spriteBatch.Draw(_background, new Rectangle(_startPos.X, _startPos.Y, _trackWidth, _trackHeight), null, backgroundColor, 0, new Vector2(0, 0), SpriteEffects.None, 0);
+
 
             DrawStartLine(spriteBatch);
-            
+
             spriteBatch.Draw(
                 _raceTrackTexture,
                 new Rectangle(_startPos.X , _startPos.Y, _trackWidth, _trackHeight),
-                Color.White
-            );
+                raceTrackFilter
+                );
 
             DrawStartPhase(spriteBatch);
 
@@ -607,6 +625,10 @@ namespace Matlabs.OwlRacer.GameClient.States
             if (OwlKeyboard.HasBeenPressed(Keys.L))
             {
                 _capture = !_capture;
+            }
+            if (OwlKeyboard.HasBeenPressed(Keys.K))
+            {
+                _darkMode= !_darkMode;
             }
 
             return stepCommand;
