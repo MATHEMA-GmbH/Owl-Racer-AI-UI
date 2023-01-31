@@ -231,7 +231,12 @@ namespace Matlabs.OwlRacer.GameClient.States
             spriteBatch.Draw(_background, new Rectangle(_startPos.X, _startPos.Y, _trackWidth, _trackHeight), null, _corporateGray60, 0, new Vector2(0, 0), SpriteEffects.None, 0);
 
             DrawStartLine(spriteBatch);
-            
+
+            //Displaytext for Controls abvoe Racetrack
+            spriteBatch.DrawString(_font, "D: Debug", new Vector2(_startPos.X, _startPos.Y - _font.MeasureString("A").Y * 3 * _scaleFactor), Color.Black, (float)(0.0), new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
+            spriteBatch.DrawString(_font, "K: DarkMode", new Vector2(_startPos.X, _startPos.Y - _font.MeasureString("A").Y * 2 * _scaleFactor), Color.Black, (float)(0.0), new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
+            spriteBatch.DrawString(_font, "L: Log", new Vector2(_startPos.X, _startPos.Y - _font.MeasureString("A").Y * _scaleFactor), Color.Black, (float)(0.0), new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
+
             spriteBatch.Draw(
                 _raceTrackTexture,
                 new Rectangle(_startPos.X , _startPos.Y, _trackWidth, _trackHeight),
