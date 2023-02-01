@@ -251,9 +251,9 @@ namespace Matlabs.OwlRacer.GameClient.States
             DrawStartLine(spriteBatch);
 
             //Displaytext for Controls abvoe Racetrack
-            spriteBatch.DrawString(_font, "D: Debug", new Vector2(_startPos.X, _startPos.Y - _font.MeasureString("A").Y * 3 * _scaleFactor), Color.Black, (float)(0.0), new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
-            spriteBatch.DrawString(_font, "K: DarkMode", new Vector2(_startPos.X, _startPos.Y - _font.MeasureString("A").Y * 2 * _scaleFactor), Color.Black, (float)(0.0), new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
-            spriteBatch.DrawString(_font, "L: Log", new Vector2(_startPos.X, _startPos.Y - _font.MeasureString("A").Y * _scaleFactor), Color.Black, (float)(0.0), new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
+            spriteBatch.DrawString(_font, "D: Show statistics", new Vector2(_startPos.X, _startPos.Y - _font.MeasureString("A").Y * 3 * _scaleFactor), Color.Black, (float)(0.0), new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
+            spriteBatch.DrawString(_font, "K: Dark-Mode", new Vector2(_startPos.X, _startPos.Y - _font.MeasureString("A").Y * 2 * _scaleFactor), Color.Black, (float)(0.0), new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
+            spriteBatch.DrawString(_font, "L: Log game", new Vector2(_startPos.X, _startPos.Y - _font.MeasureString("A").Y * _scaleFactor), Color.Black, (float)(0.0), new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
 
             spriteBatch.Draw(
                 _raceTrackTexture,
@@ -635,6 +635,10 @@ namespace Matlabs.OwlRacer.GameClient.States
             {
                 _darkMode= !_darkMode;
             }
+            if(OwlKeyboard.HasBeenPressed(Keys.D))
+            {
+                _debugState= !_debugState;
+            }
 
             return stepCommand;
         }
@@ -793,11 +797,6 @@ namespace Matlabs.OwlRacer.GameClient.States
 
         private void DrawDebugText(SpriteBatch spriteBatch, RaceCar raceCar)
         {
-            if (OwlKeyboard.HasBeenPressed(Keys.D) && raceCar.Id.ToString() == _raceCar.Id.ToString())
-            {
-                _debugState = !_debugState;
-            }
-
             int yPos = _posInfo.Y;
             int xPos = _posInfo.X;
 
