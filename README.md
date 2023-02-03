@@ -42,41 +42,37 @@ ____
 
 ### Key Bindings
 
-####General Keybindings:
+#### General Keybindings:
 
-Upward Key: 	Accelerate car
-Downward Key: 	Decelerate car
-Left Key: 		Turn left
-Right Key: 		Turn right
-Space: 		Reset position of car
+Upward Key: 	Accelerate car <br>
+Downward Key: 	Decelerate car <br>
+Left Key: 		Turn left <br>
+Right Key: 		Turn right <br>
+Space: 		Reset position of car <br>
 
-Esc: 			Quit Session / Quit Ranking State
-D: 			Shows Statistics for the current car
-K: 			Toggles Darkmode on/off
-L: 			Logs the Gamedata 
+Esc: 			Quit Session / Quit Ranking State <br>
+D: 			Shows Statistics for the current car <br>
+K: 			Toggles Darkmode on/off <br>
+L: 			Logs the Gamedata <br>
 
 (Logged Data can be found in "./Matlabs.OwlRacer.GameClient/bin/Debug/net6.0/capture/")
 
-####Model Keybindings & appsettings.json:
+#### Model Keybindings & appsettings.json:
 
-In order for these to work you have to adjust the appsettings.json file.  
-You will find examples of correct filepaths in the apssettings_example.json  
-file. Make sure to replace "<your_path_to_python.exe>" with the correct   
-file path to your installed python.exe.
+In order for these keybindings to work you have to adjust the appsettings.json file. <br>
+You find examples of correct relative filepaths in the apssettings_example.json <br> 
+file. Make sure to replace "<your_path_to_python.exe>" with the correct <br>
+file path to your installed python.exe <br>
 
-Python Models:
-F1:			spawn simpleML_DT_deprecated model			[Decision Tree]
-F2:			spawn simpleML_RF_deprecated model			[Random Forres]
-F3:			Spawn DecisionTree_(Py) model				[Decision Tree]
+Python Models:    
+F1:			spawn simpleML_DT_deprecated model <br>
+F2:			spawn simpleML_RF_deprecated model <br>	
+F3:			Spawn DecisionTree_(Py) model <br>
 
 ML.Net Models:
-F4: 			spawn DNN_(ML.Net) model				[Deep Neural NetworK]
-F5: 			spawn DecisionTreeClassifier_(ML.NET) model 	[Decision Tree Classifier]
-F6: 			spawn RandomForest_deprecated(ML.NET) model     [Random Forrest]
-
-
-
-
+F4: 			spawn DNN_(ML.Net) mode <br>		
+F5: 			spawn DecisionTreeClassifier_(ML.NET) model <br>
+F6: 			spawn RandomForest_deprecated(ML.NET) model <br>
 
 ____
 
