@@ -147,7 +147,12 @@ namespace Matlabs.OwlRacer.GameClient.States
 
             //General scoreboard parameters
             int columnindex = 0;
-            int maxColumnIndex = 5;
+            /* maxWidthInColumns value calculation:
+             * maxWidthInColumns = 4 * regular_column_width + player_name_column_width
+             * maxWidthInColumns = 4 * 1 + 2
+             * maxWidthInColumns = 6
+             */
+            int maxWidthInColumns = 6;
             double scoreBorderTop = 0.01;
             double scoreBorderLeftRight = 0.01;
 
@@ -158,7 +163,7 @@ namespace Matlabs.OwlRacer.GameClient.States
             int scoreBoardLineHeightPx = (int)((double)_font.MeasureString("A").Y * _scaleFactor);
             
             //Pixel Values for overall Scoreboard
-            int scoreBoardWidth = maxColumnIndex * scoreBoardColumnWidthPx + 2 * scoreBoardBorderLeftRightPx;
+            int scoreBoardWidth = maxWidthInColumns * scoreBoardColumnWidthPx + 2 * scoreBoardBorderLeftRightPx;
             int scoreBoardHeight = (sortedList.Count + 1) * scoreBoardLineHeightPx + 2 * scoreBoardBorderTopPx;
 
             // Initial position on the x and y Axis
@@ -180,7 +185,8 @@ namespace Matlabs.OwlRacer.GameClient.States
             spriteBatch.DrawString(_font, "Rank", new Vector2(xPos + columnindex * scoreBoardColumnWidthPx , yPos), Color.Black, (float)0.0, new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
             columnindex++;
             spriteBatch.DrawString(_font, "Name", new Vector2(xPos + columnindex * scoreBoardColumnWidthPx, yPos), Color.Black, (float)0.0, new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
-            columnindex++;
+            //Width of player-name-column is double the normal column width
+            columnindex += 2;
             spriteBatch.DrawString(_font, "Score", new Vector2(xPos + columnindex * scoreBoardColumnWidthPx, yPos), Color.Black, (float)0.0, new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
             columnindex++;
             spriteBatch.DrawString(_font, "Crashes", new Vector2(xPos + columnindex * scoreBoardColumnWidthPx, yPos), Color.Black, (float)0.0, new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
@@ -197,7 +203,8 @@ namespace Matlabs.OwlRacer.GameClient.States
                 spriteBatch.DrawString(_font, ranking.ToString(), new Vector2(xPos, yPos), Color.Black, (float)0.0, new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
                 columnindex++;
                 spriteBatch.DrawString(_font, car.Key.Name , new Vector2(xPos + columnindex * scoreBoardColumnWidthPx, yPos), Color.Black, (float)0.0, new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
-                columnindex++;
+                //Width of player-name-column is double the normal column width
+                columnindex += 2;
                 spriteBatch.DrawString(_font, car.Value.ToString(), new Vector2(xPos + columnindex * scoreBoardColumnWidthPx, yPos ), Color.Black, (float)0.0, new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
                 columnindex++;
                 spriteBatch.DrawString(_font, car.Key.NumCrashes.ToString(), new Vector2(xPos + columnindex * scoreBoardColumnWidthPx, yPos), Color.Black, (float)0.0, new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
