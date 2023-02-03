@@ -44,17 +44,17 @@ ____
 
 #### General key bindings:
 
-Upward Key: 		Accelerate car <br>
-Downward Key: 		Decelerate car <br>
-Left Key: 			Turn left <br>
-Right Key: 			Turn right <br>
-Space: 			Reset position of car <br>
+Upward Key:            Accelerate car <br>
+Downward Key:          Decelerate car <br>
+Left Key:              Turn left <br>
+Right Key:             Turn right <br>
+Space:                 Reset position of car <br>
 
-Esc in gamestate: 	Quit session <br>
-Esc in rankingstate:	Quit ranking state <br>
-D: 				Shows car statistics <br>
-K: 				Toggles darkmode on/off <br>
-L: 				Logs the games data <br>
+Esc in gamestate:      Quit session <br>
+Esc in rankingstate:   Quit ranking state <br>
+D:                     Shows car statistics <br>
+K:                     Toggles darkmode on/off <br>
+L:                     Logs the games data <br>
 
 (Logged data can be found in "./Matlabs.OwlRacer.GameClient/bin/Debug/net6.0/capture/")
 
@@ -65,15 +65,15 @@ You find examples of correct relative filepaths in the apssettings_example.json 
 Make sure to replace "<your_path_to_python.exe>" with the correct file path to your <br>
 installed python.exe <br>
 
-Python Models:    
-F1:				spawn simpleML_DT_deprecated model <br>
-F2:				spawn simpleML_RF_deprecated model <br>	
-F3:				Spawn DecisionTree_(Py) model <br>
+Python Models:<br>
+F1:                    spawn simpleML_DT_deprecated model <br>
+F2:                    spawn simpleML_RF_deprecated model <br>	
+F3:                    spawn DecisionTree_(Py) model <br>
 
-ML.Net Models:
-F4: 				spawn DNN_(ML.Net) mode <br>		
-F5: 				spawn DecisionTreeClassifier_(ML.NET) model <br>
-F6: 				spawn RandomForest_deprecated(ML.NET) model <br>
+ML.Net Models:<br>
+F4:                    spawn DNN_(ML.Net) mode <br>		
+F5:                    spawn DecisionTreeClassifier_(ML.NET) model <br>
+F6:                    spawn RandomForest_deprecated(ML.NET) model <br>
 
 ____
 
