@@ -3,6 +3,7 @@ using Matlabs.OwlRacer.GameClient.Services;
 using Matlabs.OwlRacer.GameClient.Services.Interface;
 using Matlabs.OwlRacer.GameClient.States.Layout;
 using Matlabs.OwlRacer.GameClient.States.Options;
+using Matlabs.OwlRacer.Protobuf;
 using Microsoft.Extensions.Logging;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -40,6 +41,9 @@ namespace Matlabs.OwlRacer.GameClient.States
         private Texture2D _circle;
         private Texture2D _street;
         private Texture2D _logoMathema;
+        private Texture2D _goldMedal;
+        private Texture2D _silverMedal;
+        private Texture2D _bronzeMedal;
 
         private Color _corporateGray60 = new Color(136, 139, 141);
         private Color _corporateGray40 = new Color(187, 188, 188);
@@ -84,6 +88,9 @@ namespace Matlabs.OwlRacer.GameClient.States
             _circle = Content.Load<Texture2D>(@"Images/Circle");
             _street = Content.Load<Texture2D>(@"Images/Street");
             _logoMathema = Content.Load<Texture2D>(@"Images/mathema-logo");
+            _goldMedal = Content.Load<Texture2D>(@"Images/First-Place");
+            _silverMedal = Content.Load<Texture2D>(@"Images/Second-Place");
+            _bronzeMedal = Content.Load<Texture2D>(@"Images/Third-Place");
         }
 
         public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
@@ -177,7 +184,30 @@ namespace Matlabs.OwlRacer.GameClient.States
 
             Rectangle scoreBoardBackground = new Rectangle(xPos - scoreBoardBorderLeftRightPx, yPos - scoreBoardBorderTopPx, scoreBoardWidth, scoreBoardHeight);
             spriteBatch.Draw(_background, scoreBoardBackground, null, _corporateGray40, 0, new Vector2(0, 0), SpriteEffects.None, 0);
-            
+
+            bool isFinished = _sessionService.RaceisFinished(new GuidData { GuidString = Game.Session.Id.ToString() });
+            if (sortedList.Count > 0 && isFinished == true)
+            {
+                Rectangle goldMedalRectangle = new Rectangle(xPos - scoreBoardLineHeightPx - scoreBoardBorderLeftRightPx , yPos + scoreBoardLineHeightPx, scoreBoardLineHeightPx, scoreBoardLineHeightPx);
+                spriteBatch.Draw(_goldMedal, goldMedalRectangle, Color.White);
+                if(sortedList.Count > 1)
+                {
+                    Rectangle silverMedalRectangle = new Rectangle(xPos - scoreBoardLineHeightPx - scoreBoardBorderLeftRightPx, yPos + 2 * scoreBoardLineHeightPx, scoreBoardLineHeightPx, scoreBoardLineHeightPx);
+                    spriteBatch.Draw(_silverMedal, silverMedalRectangle, Color.White);
+
+                    if(sortedList.Count > 2)
+                    {
+                        Rectangle bronzeMedalRectangle = new Rectangle(xPos - scoreBoardLineHeightPx - scoreBoardBorderLeftRightPx, yPos + 3 * scoreBoardLineHeightPx, scoreBoardLineHeightPx, scoreBoardLineHeightPx);
+                        spriteBatch.Draw(_bronzeMedal, bronzeMedalRectangle, Color.White);
+
+                    }
+                }
+            }
+ 
+
+
+
+
             //Header above scoreboard            
             spriteBatch.DrawString(_font, "Exit Game (press Escape) ", new Vector2(xPos, yPos - (scoreBoardBorderTopPx + scoreBoardLineHeightPx)), Color.Black, (float)0.0, new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
 
@@ -197,7 +227,6 @@ namespace Matlabs.OwlRacer.GameClient.States
             //Drawing actual Ranking
             var ranking = 1;
             yPos += scoreBoardLineHeightPx;
-
             foreach (var car in sortedList)
             {
                 spriteBatch.DrawString(_font, ranking.ToString(), new Vector2(xPos, yPos), Color.Black, (float)0.0, new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);

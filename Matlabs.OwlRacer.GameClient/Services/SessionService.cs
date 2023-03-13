@@ -145,5 +145,17 @@ namespace Matlabs.OwlRacer.GameClient.Services
                 GuidString = session.Id.ToString()
             });
         }
+
+        public void FinishRace(GuidData sessionId)
+        {
+            _logger.LogInformation($"Finish Race");
+            _coreClient.FinishRace(sessionId);
+        }
+
+        public bool RaceIsFinished(GuidData session)
+        {
+            var result = _coreClient.RaceIsFinished(session);
+            return result.IsFinished;
+        }
     }
 }

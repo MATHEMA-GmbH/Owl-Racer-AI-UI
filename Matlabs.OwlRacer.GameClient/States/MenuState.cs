@@ -124,6 +124,11 @@ namespace Matlabs.OwlRacer.GameClient.States
         //List of Keys for Keyboard input Whitelist
         private List<string> _legitKeys;
 
+        //Admin Utility
+        private Button _adminModeButton;
+        private bool _adminModeOldStatus;
+        private List<Component> _removeSessionButtons = new();
+
 
 
         public MenuState(OwlRacerGame game,
@@ -144,6 +149,7 @@ namespace Matlabs.OwlRacer.GameClient.States
         {
             base.Initialize(graphicsDevice, content, options);
             Game.IsSpectator = false;
+            Game.IsAdmin = false;
             _drawRanking = false;
             _startPosCarX = 0;
             _startPosCarY = 0;
@@ -168,7 +174,7 @@ namespace Matlabs.OwlRacer.GameClient.States
             _currentPageNumber = 1;
             _totalPageNumber = 1;
             _oldSessionCount = 0;
-            _pageSize = 5;
+            _pageSize = 4;
 
 
             _buttonTexture = Content.Load<Texture2D>("Images/Button");
@@ -184,10 +190,11 @@ namespace Matlabs.OwlRacer.GameClient.States
 
 
             //Starting values for page functionality
-            pos_y = LayoutUtility.YValue(5);
+            pos_y = LayoutUtility.YValue(6);
             pos_x = LayoutUtility.XValue(0);
 
-            
+            //initialize variables for Admin Functionality
+            _adminModeOldStatus = false;
 
             //Creating list of legit Keys
             _legitKeys = createLegitKeyList();
@@ -318,6 +325,16 @@ namespace Matlabs.OwlRacer.GameClient.States
             };
             _nextPageButton.Click += nextPageButton_Click;
 
+            _adminModeButton = new Button(_buttonTexture, _buttonFont, _scaleFactor)
+            {
+                Position = LayoutUtility.VectorPosXY(0.5, 4),
+                Height = _buttonHeight,
+                Width = _buttonWidth / 2,
+                ButtonColor = Color.White,
+                Text ="Off",
+            };
+            _adminModeButton.Click += adminModeButton_Click;
+
             _track2Button.Clicked = true;
             _trackNum = 2;
 
@@ -332,6 +349,7 @@ namespace Matlabs.OwlRacer.GameClient.States
                 _track0Button,
                 _track1Button,
                 _track2Button,
+                _adminModeButton,
             };
 
             _buttonList = new List<Button>()
@@ -356,9 +374,9 @@ namespace Matlabs.OwlRacer.GameClient.States
             _components.Add(_track0Button);
             _components.Add(_track1Button);
             _components.Add(_track2Button);
-
+            _components.Add(_adminModeButton);
             //Resetting values for page Feature
-            pos_y = LayoutUtility.YValue(5);
+            pos_y = LayoutUtility.YValue(6);
             pos_x = LayoutUtility.XValue(0);
         }
 
@@ -383,7 +401,7 @@ namespace Matlabs.OwlRacer.GameClient.States
             {
                 RevertComponentsToInit();
             }
-            else if (_availableSessions.Guids.Equals(_oldSessions.Guids) == false)
+            else if (_availableSessions.Guids.Equals(_oldSessions.Guids) == false || Game.IsAdmin != _adminModeOldStatus)
             {
                 RevertComponentsToInit();
             }
@@ -433,16 +451,21 @@ namespace Matlabs.OwlRacer.GameClient.States
                         }
                     }
 
+
                     if (!buttonExist)
                     {
                         DrawSingleSessionButton(mySession, pos_x, pos_y, _buttonTextureRed);
-                        DrawSingleRemoveSessionButton(mySession, pos_x, pos_y, _buttonTextureX);
+                        if (Game.IsAdmin)
+                        {
+                            DrawSingleRemoveSessionButton(mySession, pos_x, pos_y, _buttonTextureX);
+                        }
                         int currentIndexOfFirstPageEntry = ((_currentPageNumber - 1) * _pageSize);
-                        pos_y = LayoutUtility.YValue(i - currentIndexOfFirstPageEntry + 6);
+                        pos_y = LayoutUtility.YValue(i - currentIndexOfFirstPageEntry + 7);
                     }
                 }
                 _newSessionCount = _availableSessions.Guids.Count;
-                pos_y = LayoutUtility.YValue(5);
+                pos_y = LayoutUtility.YValue(6);
+                _adminModeOldStatus = Game.IsAdmin;
             }                            
         }
 
@@ -504,7 +527,8 @@ namespace Matlabs.OwlRacer.GameClient.States
 
             //Writing Text elements in GUI
 
-            spriteBatch.DrawString(_font, "Available Sessions: ", LayoutUtility.VectorPosXY(0, 4), Color.White, (float)0.0, new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
+            spriteBatch.DrawString(_font, "Admin Mode: ", LayoutUtility.VectorPosXY(0, 4), Color.White, (float)0.0, new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
+            spriteBatch.DrawString(_font, "Available Sessions: ", LayoutUtility.VectorPosXY(0, 5), Color.White, (float)0.0, new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
             spriteBatch.DrawString(_font, "Enter Player Name: ", LayoutUtility.VectorPosXY(0,0), Color.White, (float)0.0, new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
             spriteBatch.DrawString(_font, "Enter Session Name: ", LayoutUtility.VectorPosXY(1,0), Color.White, (float)0.0, new Vector2(0,0), _scaleFactor, SpriteEffects.None, (float) 0.0);
             spriteBatch.DrawString(_font, "Choose Mode: ", LayoutUtility.VectorPosXY(0,2), Color.White, (float)0.0, new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
@@ -564,7 +588,7 @@ namespace Matlabs.OwlRacer.GameClient.States
             {
                 component.Draw(gameTime, spriteBatch);
             }
-           
+
             spriteBatch.End();
         }
 
@@ -763,6 +787,21 @@ namespace Matlabs.OwlRacer.GameClient.States
             _playerModeButton.Clicked = false;
             _spectatorModeButton.Clicked = true;
             Game.IsSpectator = true;
+        }
+
+        private void adminModeButton_Click(object sender, EventArgs e)
+        {
+            Game.IsAdmin = !Game.IsAdmin;
+            if(Game.IsAdmin == true)
+            {
+                _adminModeButton.Text = "On";
+                _adminModeButton.Clicked = true;
+            }
+            else
+            {
+                _adminModeButton.Text = "Off";
+                _adminModeButton.Clicked = false;
+            }
         }
 
 

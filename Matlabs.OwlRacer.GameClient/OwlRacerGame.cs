@@ -17,6 +17,7 @@ namespace Matlabs.OwlRacer.GameClient
         private readonly Channel _grpcChannel;
 
         public Boolean IsSpectator { get; set; }
+        public Boolean IsAdmin { get; set; }
         public Session Session { get; set; }
         public VectorOptions _startPosition;
 
