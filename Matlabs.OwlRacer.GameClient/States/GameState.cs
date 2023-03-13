@@ -200,7 +200,7 @@ namespace Matlabs.OwlRacer.GameClient.States
                 Directory.CreateDirectory(_logFilePath);
             }
 
-            _raceIsFinished = _sessionService.RaceisFinished(new GuidData { GuidString = Game.Session.Id.ToString() });
+            _raceIsFinished = _sessionService.RaceIsFinished(new GuidData { GuidString = Game.Session.Id.ToString() });
             if (!_isSpectator && _raceIsFinished == false)
             {
                 Logger.LogInformation("Creating new RaceCar.");
@@ -351,7 +351,7 @@ namespace Matlabs.OwlRacer.GameClient.States
 
 
             // Draws Cars in last position, when race is finished
-            _raceIsFinished = _sessionService.RaceisFinished(new GuidData { GuidString = Game.Session.Id.ToString() });
+            _raceIsFinished = _sessionService.RaceIsFinished(new GuidData { GuidString = Game.Session.Id.ToString() });
             if (_raceIsFinished && _raceCarFinalPositions != null)
             {
                 DrawFinishPositionRaceCarWithCars(_raceCarFinalPositions, spriteBatch);
@@ -449,7 +449,7 @@ namespace Matlabs.OwlRacer.GameClient.States
 
             // Update 
 
-            _raceIsFinished = _sessionService.RaceisFinished(new GuidData { GuidString = Game.Session.Id.ToString() });
+            _raceIsFinished = _sessionService.RaceIsFinished(new GuidData { GuidString = Game.Session.Id.ToString() });
             if (_raceIsFinished == true)
             {
                 // change needed to prevent update bug of players own race car
@@ -620,7 +620,7 @@ namespace Matlabs.OwlRacer.GameClient.States
                 DrawFinishRaceButton();
             }
 
-            _raceIsFinished = _sessionService.RaceisFinished(new GuidData { GuidString = Game.Session.Id.ToString() });
+            _raceIsFinished = _sessionService.RaceIsFinished(new GuidData { GuidString = Game.Session.Id.ToString() });
             if (!(_components.Contains(_raceFinishedButton)) && _raceIsFinished == true)
             {
                 DrawRaceFinishedButton();
@@ -761,7 +761,7 @@ namespace Matlabs.OwlRacer.GameClient.States
 
         private void CheckExecuteScript()
         {
-            _raceIsFinished = _sessionService.RaceisFinished(new GuidData { GuidString = Game.Session.Id.ToString() });
+            _raceIsFinished = _sessionService.RaceIsFinished(new GuidData { GuidString = Game.Session.Id.ToString() });
             if (_raceIsFinished == false)
             {
                 // Python
@@ -1325,7 +1325,7 @@ namespace Matlabs.OwlRacer.GameClient.States
         {
             // Button only works, when Race isn't finished
 
-            if (_sessionService.RaceisFinished(new GuidData { GuidString = Game.Session.Id.ToString() }) == false)
+            if (_sessionService.RaceIsFinished(new GuidData { GuidString = Game.Session.Id.ToString() }) == false)
             {
                 string mlNetPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), _mlNetOptions.BinPath));
                 foreach (var modelbutton in _modelButtons)
