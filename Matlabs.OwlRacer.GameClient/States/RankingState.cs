@@ -185,7 +185,7 @@ namespace Matlabs.OwlRacer.GameClient.States
             Rectangle scoreBoardBackground = new Rectangle(xPos - scoreBoardBorderLeftRightPx, yPos - scoreBoardBorderTopPx, scoreBoardWidth, scoreBoardHeight);
             spriteBatch.Draw(_background, scoreBoardBackground, null, _corporateGray40, 0, new Vector2(0, 0), SpriteEffects.None, 0);
 
-            bool isFinished = _sessionService.RaceisFinished(new GuidData { GuidString = Game.Session.Id.ToString() });
+            bool isFinished = _sessionService.RaceIsFinished(new GuidData { GuidString = Game.Session.Id.ToString() });
             if (sortedList.Count > 0 && isFinished == true)
             {
                 Rectangle goldMedalRectangle = new Rectangle(xPos - scoreBoardLineHeightPx - scoreBoardBorderLeftRightPx , yPos + scoreBoardLineHeightPx, scoreBoardLineHeightPx, scoreBoardLineHeightPx);
