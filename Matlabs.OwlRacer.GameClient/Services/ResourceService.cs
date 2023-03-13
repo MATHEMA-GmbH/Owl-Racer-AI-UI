@@ -48,8 +48,10 @@ namespace Matlabs.OwlRacer.GameClient.Services
             {
                 { 0, await File.ReadAllBytesAsync("Resources/light_0.png") },
                 { 1, await File.ReadAllBytesAsync("Resources/light_1.png") },
-                { 2, await File.ReadAllBytesAsync("Resources/light_2.png") },
-                { 3, await File.ReadAllBytesAsync("Resources/light_3.png") },
+                { 2, await File.ReadAllBytesAsync("Resources/light_1.png") },
+                { 3, await File.ReadAllBytesAsync("Resources/light_2.png") },
+                { 4, await File.ReadAllBytesAsync("Resources/light_2.png") },
+                { 5, await File.ReadAllBytesAsync("Resources/light_3.png") },
             };
         }
     }

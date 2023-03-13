@@ -10,6 +10,10 @@ namespace Matlabs.OwlRacer.GameClient.Services.Interface
         Session GetSession(Guid sessionId);
         void DestroySession(Session session);
 
+        void FinishRace(GuidData guid);
+
+        bool RaceIsFinished(GuidData guid);
+
         GuidListData GetSessionIds();
     }
 }

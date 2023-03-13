@@ -7,8 +7,13 @@ using System.Linq;
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
+using DocumentFormat.OpenXml.Bibliography;
 using DocumentFormat.OpenXml.Drawing.Charts;
+using DocumentFormat.OpenXml.InkML;
+using DocumentFormat.OpenXml.Math;
+using DocumentFormat.OpenXml.Presentation;
 using DocumentFormat.OpenXml.Spreadsheet;
 using Grpc.Core;
 using Grpc.Net.Client;
@@ -70,16 +75,21 @@ namespace Matlabs.OwlRacer.GameClient.States
 
         private Texture2D _buttonTextureRed;
         private Texture2D _buttonTexture;
+        private Texture2D _buttonTextureX;
         private Texture2D _background;
         private Texture2D _logo;
         private Texture2D _logoMathema;
         private Texture2D _circle;
         private Texture2D _street;
+        private Texture2D _finishFlag;
         private Dictionary<int, Texture2D> _startPhaseTextures = new();
 
         private List<Component> _components;
         private List<RaceCarButton> _raceCarButtons = new();
+        private List<ModelButton> _modelButtons = new();
+        private List<RaceCarButton> _raceCarRemoveButtons = new();
         private int _numPlayers = 0;
+        private bool _adminOldStatus = false;
 
         // Game Specific Data
         private bool _isSpectator;
@@ -116,6 +126,19 @@ namespace Matlabs.OwlRacer.GameClient.States
         //DarkMode
         private bool _darkMode;
 
+        //Logging
+        private string _oldFilePath;
+
+        //Admin Feature
+        private bool _raceIsFinished;
+        private bool _isAdmin;
+        private List<RaceCar> _raceCarFinalPositions;
+
+        private int _modelButtonWidth;
+        private Button _modelStartButton;
+        private Button _raceFinishedButton;
+        private Button _finishRaceButton;
+
         public GameState(
             OwlRacerGame game,
             ILogger<GameState> logger,
@@ -146,8 +169,8 @@ namespace Matlabs.OwlRacer.GameClient.States
             _fontSmall = Content.Load<SpriteFont>("Inter-Regular-small");
             _buttonFont = Content.Load<SpriteFont>("Inter-Regular");
 
-
             _isSpectator = Game.IsSpectator;
+            _isAdmin = Game.IsAdmin;
 
             _components = new List<Component>(){};
 
@@ -156,6 +179,8 @@ namespace Matlabs.OwlRacer.GameClient.States
             _dataWriter = null;
 
             _darkMode = false;
+
+            _raceCarFinalPositions = null;
 
             //Calculating parameters for UI-scaling
             _scaleX = ((float)(GraphicsDevice.Adapter.CurrentDisplayMode.Width) / (float)1920);
@@ -167,13 +192,16 @@ namespace Matlabs.OwlRacer.GameClient.States
             _buttonWidth = LayoutUtility.widthPx(1);
             _textLineHeight = (int)((float)_font.MeasureString("A").Y * _scaleFactor);
 
+            // Logging information 
             _logFilePath = Path.Join(Directory.GetCurrentDirectory(), "capture");
+            _oldFilePath = "";
             if (!Directory.Exists(_logFilePath))
             {
                 Directory.CreateDirectory(_logFilePath);
             }
 
-            if (!_isSpectator)
+            _raceIsFinished = _sessionService.RaceisFinished(new GuidData { GuidString = Game.Session.Id.ToString() });
+            if (!_isSpectator && _raceIsFinished == false)
             {
                 Logger.LogInformation("Creating new RaceCar.");
                 _raceCar = _gameService.CreateRaceCarAsync(Game.Session, 0.5f, 0.05f, Options.RaceCarName, string.Empty).Result;
@@ -187,6 +215,7 @@ namespace Matlabs.OwlRacer.GameClient.States
         {
             _buttonTextureRed = Content.Load<Texture2D>("Images/ButtonRedMini");
             _buttonTexture = Content.Load<Texture2D>("Images/Button");
+            _buttonTextureX = Content.Load<Texture2D>("Images/ButtonX");
             _raceCarNameFont = Content.Load<SpriteFont>("Inter-Regular-small");
 
             var rawBaseImageData = _resourceService.GetBaseImageDataAsync().Result;
@@ -220,6 +249,7 @@ namespace Matlabs.OwlRacer.GameClient.States
             _background = new Texture2D(GraphicsDevice, 1, 1, false, SurfaceFormat.Color);
             _background.SetData(new[] { Color.White });
 
+            _finishFlag = Content.Load<Texture2D>(@"Images/Finish-Flag");
             _logo = Content.Load<Texture2D>(@"Images/owlracer-logo-solo");
             _logoMathema = Content.Load<Texture2D>(@"Images/mathema-logo");
             _circle = Content.Load<Texture2D>(@"Images/Circle");
@@ -227,6 +257,9 @@ namespace Matlabs.OwlRacer.GameClient.States
             _startPos = new VectorOptions((int)(GraphicsDevice.Adapter.CurrentDisplayMode.Width*0.01), (int)((GraphicsDevice.Adapter.CurrentDisplayMode.Height - _trackHeight - _logo.Height/3)*0.5));
             _posInfo = new VectorOptions((int)(_trackWidth + LayoutUtility.widthPx(0.1)), 20);
             _startLinePos = Game.Session.RaceTrack.StartLine;
+
+            // Width of model buttons is calculated to fill the space from the keybindings information to the end of the racetrack in steps of 4
+            _modelButtonWidth = (_raceTrackTexture.Width - (int)((_font.MeasureString("D: Show statistics   ").X) * _scaleFactor)) / 4;
         }
 
         public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
@@ -250,9 +283,18 @@ namespace Matlabs.OwlRacer.GameClient.States
 
             DrawStartLine(spriteBatch);
 
+            // Text for adding models in right next to the keybindings info text and 3 buttonheights above the track
+            if(Game.IsAdmin)
+            {
+                spriteBatch.DrawString(_font, "Choose model to add:", new Vector2(_startPos.X + (int)((_font.MeasureString("D: Show statistics   ").X) * _scaleFactor), (int)(_startPos.Y - 3 * _buttonHeight)), Color.Black, (float)(0.0), new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
+            }
+
             //Displaytext for Controls abvoe Racetrack
-            spriteBatch.DrawString(_font, "D: Show statistics", new Vector2(_startPos.X, _startPos.Y - _font.MeasureString("A").Y * 3 * _scaleFactor), Color.Black, (float)(0.0), new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
-            spriteBatch.DrawString(_font, "K: Dark-Mode", new Vector2(_startPos.X, _startPos.Y - _font.MeasureString("A").Y * 2 * _scaleFactor), Color.Black, (float)(0.0), new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
+
+            // Positioning of texts starts 4 lines of text above the start position of the track and goes down from there
+            spriteBatch.DrawString(_font, "Esc: Quit game", new Vector2(_startPos.X, _startPos.Y - 4 * _font.MeasureString("A").Y * _scaleFactor), Color.Black, (float)(0.0), new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
+            spriteBatch.DrawString(_font, "D: Show statistics", new Vector2(_startPos.X, _startPos.Y - 3 * _font.MeasureString("A").Y * _scaleFactor), Color.Black, (float)(0.0), new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
+            spriteBatch.DrawString(_font, "K: Dark-Mode", new Vector2(_startPos.X, _startPos.Y - 2 * _font.MeasureString("A").Y * _scaleFactor), Color.Black, (float)(0.0), new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
             spriteBatch.DrawString(_font, "L: Log game", new Vector2(_startPos.X, _startPos.Y - _font.MeasureString("A").Y * _scaleFactor), Color.Black, (float)(0.0), new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
 
             spriteBatch.Draw(
@@ -276,7 +318,13 @@ namespace Matlabs.OwlRacer.GameClient.States
                 //    DrawVibrationText(spriteBatch);
                 //}  
             }
-            
+            else if (_isSpectator && _capture && _raceCarInfo != "")
+            {
+                DrawRecordingSquare(spriteBatch);
+            }
+
+
+
             var myRaceCarId = 0;
             foreach (var raceCar in _raceCarList)
             {
@@ -299,6 +347,14 @@ namespace Matlabs.OwlRacer.GameClient.States
                 {
                     DrawDebugText(spriteBatch, raceCar);
                 }
+            }
+
+
+            // Draws Cars in last position, when race is finished
+            _raceIsFinished = _sessionService.RaceisFinished(new GuidData { GuidString = Game.Session.Id.ToString() });
+            if (_raceIsFinished && _raceCarFinalPositions != null)
+            {
+                DrawFinishPositionRaceCarWithCars(_raceCarFinalPositions, spriteBatch);
             }
 
             foreach (var component in _components)
@@ -330,10 +386,19 @@ namespace Matlabs.OwlRacer.GameClient.States
             spriteBatch.DrawString(_fontSmall, "EIN PROJEKT DER", LayoutUtility.bottomRightVectorPosXY(1), _corporateGray60, (float)0.0, new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
             spriteBatch.Draw(_logoMathema, logoRectMathema, Color.White);
 
-            spriteBatch.DrawString(_font, $"Session: {Game.Session.Name}", new Vector2(_trackWidth / 2 - 40, 20), Color.Black,(float)0.0,new Vector2(0,0), _scaleFactor, SpriteEffects.None, (float)0.0);
+            string typePlayer = _isSpectator ? "Spectator" : "Player";
+            typePlayer += _isAdmin ? "&Admin": "";
 
+            spriteBatch.DrawString(_font, $"Session: {Game.Session.Name}", new Vector2(_trackWidth / 2 - 40, 20), Color.Black,(float)0.0,new Vector2(0,0), _scaleFactor, SpriteEffects.None, (float)0.0);
+            spriteBatch.DrawString(_font, $"Logged in as: {typePlayer}", new Vector2(_trackWidth / 2 - 40, 20 + _font.MeasureString("A").Y), Color.Black, (float)0.0, new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
             //DrawRankingText(spriteBatch, 10, 300, _raceCarList);
 
+            Rectangle finishFlagRect = new Rectangle(11 * (int)_font.MeasureString("A").X + LayoutUtility.widthPx(0.25) + _modelButtonWidth - _buttonHeight, 10, _buttonHeight, _buttonHeight);
+
+            if(Game.IsAdmin == true)
+            {
+                spriteBatch.Draw(_finishFlag, finishFlagRect, Color.White);
+            }
             spriteBatch.End();
         }
 
@@ -371,7 +436,7 @@ namespace Matlabs.OwlRacer.GameClient.States
             int fontWidth = (int)(_font.MeasureString("A").X*_scaleFactor);
             spriteBatch.DrawString(_font, $"{(Game.Session.GameTime.Ticks < 0 ? "-": "")} {Math.Abs(Game.Session.GameTime.Minutes)}:{Math.Abs(Game.Session.GameTime.Seconds)}.{Math.Abs(Game.Session.GameTime.Milliseconds)}", new Vector2(10, 10), Color.Black,(float)0.0,new Vector2(0,0), _scaleFactor,SpriteEffects.None, (float)0.0);
 
-            var phase = Game.Session.HasRaceStarted ? 0 : Math.Clamp(Math.Abs(Game.Session.GameTime.Seconds - 1), 0, 3);
+            var phase = Game.Session.HasRaceStarted ? 0 : Math.Clamp(Math.Abs(Game.Session.GameTime.Seconds - 1), 0, 5);
 
             spriteBatch.Draw(
                 _startPhaseTextures[phase],
@@ -381,6 +446,23 @@ namespace Matlabs.OwlRacer.GameClient.States
 
         public override void Update(GameTime gameTime)
         {
+
+            // Update 
+
+            _raceIsFinished = _sessionService.RaceisFinished(new GuidData { GuidString = Game.Session.Id.ToString() });
+            if (_raceIsFinished == true)
+            {
+                // change needed to prevent update bug of players own race car
+                _isSpectator = true;
+            }
+            else
+            {
+                // Updates the cars final positions as long as race isn't finished
+                // With a sufficient delay between finishing the race and deleting the cars
+                // This should allow clients to keep a pretty accurate final position of cars,
+                // when the race finishes
+                _raceCarFinalPositions = FinishPositionListRaceCarWithCars();
+            }
             OwlKeyboard.GetState();
             var keyState = OwlKeyboard.currentKeyState;
             var currentState = GamePad.GetState(PlayerIndex.One);
@@ -473,6 +555,10 @@ namespace Matlabs.OwlRacer.GameClient.States
 
                 if (keyState.IsKeyDown(Keys.Escape))
                 {
+                    if(_dataWriter!= null)
+                    {
+                        _dataWriter.Close();
+                    }
                     _raceCarList.Remove(_raceCar);
                     _gameService.DestroyRaceCarAsync(_raceCar);   
                 }
@@ -486,24 +572,17 @@ namespace Matlabs.OwlRacer.GameClient.States
                     _previousGamePadState = currentState;
                 }
 
+
+
                 stepCommand = GetKeyboardStepCommand(keyState, stepCommand);
-
-                // mit logger in csv schreiben...
-                if (_capture && _dataWriter is null)
-                {
-                    _dataWriter = File.AppendText(Path.Join(_logFilePath, $"{_raceCar.Id}.txt"));
-                    _dataWriter.WriteLine("Id;IsCrashed;MaxVelocity;Position.X;Position.Y;PreviousCheckpoint;Rotation;Score;ScoreOverall;Ticks;Velocity;Distance.Front;Distance.FrontLeft;Distance.FrontRight;Distance.Left;Distance.Right;stepCommand");
-                    _dataWriter.WriteLine(GetMessage(_raceCar, stepCommand));
-                    _dataWriter.Flush();
-                }
-                else if(_capture && _dataWriter != null)
-                {
-                    _dataWriter.WriteLine(GetMessage(_raceCar, stepCommand));
-                    _dataWriter.Flush();
-                }
+              
             }
-            List<RaceCar> removeCarList = new List<RaceCar>();
 
+            if (OwlKeyboard.HasBeenPressed(Keys.L))
+            {
+                _capture = !_capture;
+            }
+            
             Parallel.ForEach(_raceCarList, raceCar =>
             {
                 try
@@ -516,7 +595,37 @@ namespace Matlabs.OwlRacer.GameClient.States
                 }
             });
 
+            if (_capture && _raceCarInfo != "" && _isAdmin)
+            {
+                int index = _raceCarList.FindIndex(x => x.Id.ToString() == _raceCarInfo);
+                if (index >= 0)
+                {
+                    logRacecar(_raceCarList.ElementAt(index));
+                }
+            }
+            else if (_capture && _raceCarInfo == "" && !_isSpectator&& _raceCarList.Contains(_raceCar))
+            { 
+                logRacecar(_raceCar);
+            }
+
             UpdatePlayers();
+
+            if (!_components.Contains(_modelStartButton) && Game.IsAdmin == true)
+            {
+                DrawModelCarButtons();
+            }
+
+            if (!_components.Contains(_finishRaceButton) && Game.IsAdmin == true)
+            {
+                DrawFinishRaceButton();
+            }
+
+            _raceIsFinished = _sessionService.RaceisFinished(new GuidData { GuidString = Game.Session.Id.ToString() });
+            if (!(_components.Contains(_raceFinishedButton)) && _raceIsFinished == true)
+            {
+                DrawRaceFinishedButton();
+            }
+
 
             foreach (var component in _components)
             {
@@ -626,11 +735,7 @@ namespace Matlabs.OwlRacer.GameClient.States
             {
                 _logger.LogWarning($"Failed to step race car with id {_raceCar.Id}; message: {ex}");
             }
-            
-            if (OwlKeyboard.HasBeenPressed(Keys.L))
-            {
-                _capture = !_capture;
-            }
+
             if (OwlKeyboard.HasBeenPressed(Keys.K))
             {
                 _darkMode= !_darkMode;
@@ -656,65 +761,70 @@ namespace Matlabs.OwlRacer.GameClient.States
 
         private void CheckExecuteScript()
         {
-            // Python
-            if (_pythonOptions.ScriptMappings != null && _pythonOptions.BinPath != null)
+            _raceIsFinished = _sessionService.RaceisFinished(new GuidData { GuidString = Game.Session.Id.ToString() });
+            if (_raceIsFinished == false)
             {
-
-                foreach (var mapping in _pythonOptions.ScriptMappings)
+                // Python
+                if (_pythonOptions.ScriptMappings != null && _pythonOptions.BinPath != null)
                 {
-                    if (Enum.TryParse(typeof(Keys), mapping.Key, true, out var value))
-                    {
-                        var key = (Keys) value;
 
-                        if (OwlKeyboard.HasBeenPressed(key))
+                    foreach (var mapping in _pythonOptions.ScriptMappings)
+                    {
+                        if (Enum.TryParse(typeof(Keys), mapping.Key, true, out var value))
                         {
-                            Logger.LogInformation($"Executing python script {mapping.File}");
-                            var args = $"{mapping.File} --session={Game.Session.Id} --carName={mapping.CarName} --carColor={mapping.CarColor} --model={mapping.Model}";
-                            ExecuteScript(_pythonOptions.BinPath, args);
+                            var key = (Keys)value;
+
+                            if (OwlKeyboard.HasBeenPressed(key))
+                            {
+                                Logger.LogInformation($"Executing python script {mapping.File}");
+                                var args = $"{mapping.File} --session={Game.Session.Id} --carName={mapping.CarName} --carColor={mapping.CarColor} --model={mapping.Model}";
+                                ExecuteScript(_pythonOptions.BinPath, args);
+                            }
+                        }
+                    }
+                }
+
+                // ML.NET
+                if (_mlNetOptions.ScriptMappings != null && _mlNetOptions.BinPath != null)
+                {
+                    foreach (var mapping in _mlNetOptions.ScriptMappings)
+                    {
+                        if (Enum.TryParse(typeof(Keys), mapping.Key, true, out var value))
+                        {
+                            var key = (Keys)value;
+
+                            if (OwlKeyboard.HasBeenPressed(key))
+                            {
+                                var path = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), _mlNetOptions.BinPath));
+                                Logger.LogInformation($"Executing ML.NET {mapping.File}");
+                                var args = $"--model={mapping.File} --session={Game.Session.Id} --carName={mapping.CarName} --carColor={mapping.CarColor} --version={mapping.Version}";
+                                ExecuteScript(path, args); //> venv?
+                            }
+                        }
+                    }
+                }
+
+                // Generic Scripts
+                if (_genericOptions.ScriptMappings != null)
+                {
+                    foreach (var mapping in _genericOptions.ScriptMappings)
+                    {
+                        if (Enum.TryParse(typeof(Keys), mapping.Key, true, out var value))
+                        {
+                            var key = (Keys)value;
+
+                            if (OwlKeyboard.HasBeenPressed(key))
+                            {
+                                var args = mapping.Args.Replace("[SESSIONID]", Game.Session.Id.ToString());
+                                Logger.LogInformation($"Executing generic script {mapping.File} with args \"{args}\"");
+
+                                ExecuteScript(mapping.File, args, mapping.ShellExecute);
+                            }
                         }
                     }
                 }
             }
-
-            // ML.NET
-            if (_mlNetOptions.ScriptMappings != null && _mlNetOptions.BinPath != null)
-            {
-                foreach (var mapping in _mlNetOptions.ScriptMappings)
-                {
-                    if (Enum.TryParse(typeof(Keys), mapping.Key, true, out var value))
-                    {
-                        var key = (Keys)value;
-
-                        if (OwlKeyboard.HasBeenPressed(key))
-                        {
-                            var path = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), _mlNetOptions.BinPath));
-                            Logger.LogInformation($"Executing ML.NET {mapping.File}");
-                            var args = $"--model={mapping.File} --session={Game.Session.Id} --carName={mapping.CarName} --carColor={mapping.CarColor} --version={mapping.Version}";
-                            ExecuteScript(path, args); //> venv?
-                        }
-                    }
-                }
-            }
-
-            // Generic Scripts
-            if (_genericOptions.ScriptMappings != null)
-            {
-                foreach (var mapping in _genericOptions.ScriptMappings)
-                {
-                    if (Enum.TryParse(typeof(Keys), mapping.Key, true, out var value))
-                    {
-                        var key = (Keys)value;
-
-                        if (OwlKeyboard.HasBeenPressed(key))
-                        {
-                            var args = mapping.Args.Replace("[SESSIONID]", Game.Session.Id.ToString());
-                            Logger.LogInformation($"Executing generic script {mapping.File} with args \"{args}\"");
-                            
-                            ExecuteScript(mapping.File, args, mapping.ShellExecute);
-                        }
-                    }
-                }
-            }
+            
         }
 
         private void ExecuteScript(string exe, string args, bool shellExecute = false)
@@ -895,14 +1005,9 @@ namespace Matlabs.OwlRacer.GameClient.States
 
         private void UpdatePlayers()
         {
-
-            if (_raceCarList.Count == 0)
+            if (_raceCarList.Count != _numPlayers || _adminOldStatus != Game.IsAdmin)
             {
-                _components.Clear();
-            }
-
-            if (_raceCarList.Count != _numPlayers)
-            {
+                _adminOldStatus = Game.IsAdmin;
                 _numPlayers = _raceCarList.Count;
                 _components.Clear();
                 var pos_y = Math.Max(_startPos.Y, _posInfo.Y + _textLineHeight * 13);
@@ -926,11 +1031,19 @@ namespace Matlabs.OwlRacer.GameClient.States
                             if (pos_y + 350 < GraphicsDevice.Adapter.CurrentDisplayMode.Height - _street.Height)
                             {
                                 DrawSingleRaceCarButton(pos_x, pos_y, car);
+                                if (Game.IsAdmin == true)
+                                {
+                                    DrawSingleRemoveCarButton(car, pos_x, pos_y, _buttonTextureX);
+                                }
                                 pos_y += _buttonHeight + _buttonHeight / 5;
                             }
                             else
                             {
                                 DrawSingleRaceCarButton(pos_x_2, pos_y_2, car);
+                                if (Game.IsAdmin == true)
+                                {
+                                    DrawSingleRemoveCarButton(car, pos_x, pos_y, _buttonTextureX);
+                                }
                                 pos_y_2 += _buttonHeight + _buttonHeight / 5;
                             }  
                         }
@@ -940,11 +1053,19 @@ namespace Matlabs.OwlRacer.GameClient.States
                         if (pos_y + 350 < GraphicsDevice.Adapter.CurrentDisplayMode.Height - _street.Height)
                         {
                             DrawSingleRaceCarButton(pos_x, pos_y, car);
+                            if (Game.IsAdmin == true )
+                            {
+                                DrawSingleRemoveCarButton(car, pos_x, pos_y, _buttonTextureX);
+                            }
                             pos_y += _buttonHeight + _buttonHeight / 5;
                         }
                         else
                         {
                             DrawSingleRaceCarButton(pos_x_2, pos_y_2, car);
+                            if (Game.IsAdmin == true)
+                            {
+                                DrawSingleRemoveCarButton(car, pos_x, pos_y, _buttonTextureX);
+                            }
                             pos_y_2 += _buttonHeight + _buttonHeight / 5;
                         }
                     }
@@ -1014,6 +1135,351 @@ namespace Matlabs.OwlRacer.GameClient.States
                 raceCarButton.Clicked = false;
             }
                 _raceCarInfo = "";
+        }
+        private void logRacecar(RaceCar raceCar)
+        {
+            string filePath = null;
+            if (_raceCarList.Contains(raceCar))
+            {
+                filePath = Path.Join(_logFilePath, $"{Game.Session.Id}", $"{raceCar.Id}.txt");
+
+                // Closes Datawriter, if Generated Filepath changed
+                // This happens, if another Car is chosen
+                if (filePath != _oldFilePath && !(_dataWriter is null))
+                {
+                    _dataWriter.Close();
+                    _dataWriter = null;
+
+                }
+
+                // Opens new Datawriter
+                if (_dataWriter is null)
+                {
+                    // Creates new Folder, but only if it doesn't already exist
+                    Directory.CreateDirectory(Path.Join(_logFilePath, $"{Game.Session.Id}"));
+                    
+                    // Initializes new file, if it doesn't already exist
+                    // Adds Headers for data as well
+                    if (!File.Exists(filePath))
+                    {
+                        _dataWriter = File.AppendText(Path.Join(_logFilePath, $"{Game.Session.Id}", $"{raceCar.Id}.txt"));
+                        _dataWriter.WriteLine("Time; Id;IsCrashed;MaxVelocity;Position.X;Position.Y;PreviousCheckpoint;Rotation;Score;ScoreOverall;Ticks;Velocity;Distance.Front;Distance.FrontLeft;Distance.FrontRight;Distance.Left;Distance.Right");
+                        _dataWriter.Flush();
+                    }
+                    // opens Streamwriter for existing files
+                    else
+                    {
+                        _dataWriter = File.AppendText(Path.Join(_logFilePath, $"{Game.Session.Id}", $"{raceCar.Id}.txt"));
+                        _dataWriter.Flush();
+                    }
+                }
+                // Writes Data into file
+                else if (_dataWriter != null)
+                {
+                    _dataWriter.WriteLine($@"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture)};{raceCar.Id};{raceCar.IsCrashed};{raceCar.MaxVelocity};{raceCar.Position.X};{raceCar.Position.Y};{raceCar.PreviousCheckpoint};{raceCar.Rotation};{raceCar.ScoreStep};{raceCar.ScoreOverall};{raceCar.Ticks};{raceCar.Velocity};{raceCar.Distance.Front};{raceCar.Distance.FrontLeft};{raceCar.Distance.FrontRight};{raceCar.Distance.Left};{raceCar.Distance.Right}");
+                    _dataWriter.Flush();
+                }
+            }
+
+
+           _oldFilePath = filePath;
+        }
+        private void DrawSingleRemoveCarButton(RaceCar car, int pos_x, int pos_y, Texture2D buttonTexture)
+        {
+            var raceCarRemoveButton = new RaceCarButton(buttonTexture, _buttonFont, _scaleFactor)
+            {
+                Position = new Vector2(pos_x, pos_y),
+                RaceCarId = car.Id.ToString(),
+                Height = _buttonHeight,
+                Width = _buttonHeight,
+            };
+           
+            raceCarRemoveButton.Click += RaceCarRemoveButton_Click;
+            _components.Add(raceCarRemoveButton);
+            _raceCarRemoveButtons.Add(raceCarRemoveButton);
+        }
+
+        private void RaceCarRemoveButton_Click(object sender, EventArgs e)
+        {
+            foreach (var raceCarRemoveButton in _raceCarRemoveButtons)
+            {
+                if (sender == raceCarRemoveButton)
+                {
+                    var raceCarId = raceCarRemoveButton.RaceCarId;
+                    RaceCar raceCarToRemove = _raceCarList.Find(x => x.Id.ToString() ==raceCarId);
+                    _raceCarList.Remove(raceCarToRemove);
+                    _gameService.DestroyRaceCarAsync(raceCarToRemove);
+                }
+            }
+        }
+
+        private void DrawSingleModelCarButton(ScriptMappingOptions script,  int pos_x, int pos_y, string path)
+        {
+            var modelCarButton = new ModelButton(script, _buttonTexture, _buttonFont, _scaleFactor, path)
+            {
+                Position = new Vector2(pos_x, pos_y),
+                Height = _buttonHeight,
+                Width = _modelButtonWidth,
+            };
+
+            modelCarButton.Click += ModelCarButton_Click;
+            _components.Add(modelCarButton);
+            _modelButtons.Add(modelCarButton);
+        }
+
+        private void ModelCarButton_Click(object sender, EventArgs e)
+        {
+            foreach (var modelbutton in _modelButtons)
+            {
+                if (sender == modelbutton)
+                {
+                    modelbutton.Clicked = !modelbutton.Clicked;
+                }
+            }
+        }
+
+        private void DrawModelCarButtons()
+        {
+            string mlNetPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), _mlNetOptions.BinPath));
+
+
+            // Start Positions to create ModelButtons
+            int startValueX = _startPos.X + (int)((_font.MeasureString("D: Show statistics   ").X) * _scaleFactor);
+            int startValueY = (int)(_startPos.Y - 2 * _buttonHeight);
+
+            // Declaring and initializing local variables for placing Model Buttons
+            int xValue = startValueX;
+            int yValue = startValueY;
+
+            // Calculation of number of Scripts in current config
+            int numPythonScripts = _pythonOptions.ScriptMappings.Count();
+            int numMLNetScripts = _mlNetOptions.ScriptMappings.Count();
+            int numGenericScripts = _genericOptions.ScriptMappings.Count();
+            int numScriptsTotal = numPythonScripts + numMLNetScripts + numGenericScripts;
+
+            // Capping the number of Buttons at 6
+            int maxNumScripts = Math.Min(6, numScriptsTotal);
+
+            //
+
+            ScriptMappingOptions interimScript;
+            int indexRebased;
+
+            // For loop to create model buttons
+            // The idea is to draw all the buttons for a category, such as Python, before
+            // going to the next Categorie
+            // It is important, that there are no placeholder dummies in the config files,
+            // as they would also generate a model button.
+            for (int i = 0; i < maxNumScripts; i++)
+            {
+                // First Branch of if statement is to create Python model buttons, which are currently drawn first
+                // Method is only executed, if there is enough Data for Python 
+                if (_pythonOptions.ScriptMappings != null && _pythonOptions.BinPath != null && i < numPythonScripts)
+                {
+                    interimScript = _pythonOptions.ScriptMappings.ElementAt(i);
+                    DrawSingleModelCarButton( interimScript, xValue, yValue, _pythonOptions.BinPath);
+
+                }
+                // Second  Branch of if statement is to create ML.Net model buttons
+                // Method is only executed, if there is enough Data for ML.Net 
+                else if (i >= numPythonScripts && i < numMLNetScripts + numPythonScripts && _mlNetOptions.ScriptMappings != null && _mlNetOptions.BinPath != null)
+                {
+                    indexRebased = (i - numPythonScripts);
+                    interimScript = _mlNetOptions.ScriptMappings.ElementAt(indexRebased);
+                    DrawSingleModelCarButton(interimScript, xValue, yValue, mlNetPath);
+                }
+                // Third  Branch for Generic Models
+                else if (_genericOptions.ScriptMappings != null && i >= numPythonScripts + numMLNetScripts)
+                {
+                    indexRebased = i - numPythonScripts - numMLNetScripts;
+                    interimScript = _genericOptions.ScriptMappings.ElementAt(indexRebased);
+                    string interimFile = _genericOptions.ScriptMappings.ElementAt(indexRebased).File;
+                    DrawSingleModelCarButton(interimScript, xValue, yValue, interimFile);
+                }
+                xValue += _modelButtonWidth;
+                
+                // Switch to change to second Row of Buttons as soon as 3 Buttons are drawn
+                if(i == 2)
+                {
+                    xValue = startValueX;
+                    yValue = startValueY + _buttonHeight;
+                }
+
+            }
+
+            // Finally adding a single Button to start the models
+            _modelStartButton = new Button(_buttonTexture, _font, _scaleFactor)
+            {
+                Position = new Vector2(startValueX + 3 * _modelButtonWidth, startValueY + _buttonHeight),
+                Height = _buttonHeight,
+                Width = _modelButtonWidth,
+                Text = "Start Model",
+            };
+            _modelStartButton.Click += StartModelCarButton_Click;
+            _components.Add(_modelStartButton);
+
+
+
+        }
+        private void StartModelCarButton_Click(object sender, EventArgs e)
+        {
+            // Button only works, when Race isn't finished
+
+            if (_sessionService.RaceisFinished(new GuidData { GuidString = Game.Session.Id.ToString() }) == false)
+            {
+                string mlNetPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), _mlNetOptions.BinPath));
+                foreach (var modelbutton in _modelButtons)
+                {
+                    // Executes script for the clicked Buttons
+                    if (modelbutton.Clicked == true)
+                    {
+                        // For the following see also code in checkExecuteScript()
+                        if (modelbutton.path == _pythonOptions.BinPath)
+                        {
+                            Logger.LogInformation($"Executing Python script {modelbutton.script.File}");
+                            var args = $"{modelbutton.script.File} --session={Game.Session.Id} --carName={modelbutton.script.CarName} --carColor={modelbutton.script.CarColor} --model={modelbutton.script.Model}";
+                            ExecuteScript(modelbutton.path, args);
+                        }
+                        else if (modelbutton.path == mlNetPath)
+                        {
+                            Logger.LogInformation($"Executing ML.NET {modelbutton.script.File}");
+                            var args = $"--model={modelbutton.script.File} --session={Game.Session.Id} --carName={modelbutton.script.CarName} --carColor={modelbutton.script.CarColor} --version={modelbutton.script.Version}";
+                            ExecuteScript(modelbutton.path, args);
+                        }
+                        else
+                        {
+                            var args = modelbutton.script.Args.Replace("[SESSIONID]", Game.Session.Id.ToString());
+                            Logger.LogInformation($"Executing generic script {modelbutton.script.File} with args \"{args}\"");
+                            ExecuteScript(modelbutton.script.File, args, modelbutton.script.ShellExecute);
+                        }
+                        modelbutton.Clicked = false;
+                    }
+                }
+            }
+            
+        }
+
+        
+        private List<RaceCar> FinishPositionListRaceCarWithCars()
+        {
+            // this Method is intended to create a copy of the 
+            // RaceCars in the current game. The copies
+            // have fixed values and are used to create
+            // the impression that the screen is frozen.
+
+
+            List<RaceCar> data = new();
+
+            foreach (RaceCar raceCar in _raceCarList)
+            {
+                // Transfering CarDistance data of RaceCar to new Object to copy values
+                CarDistance InterimResult = new CarDistance();
+                InterimResult.FrontLeft = raceCar.Distance.FrontLeft;
+                InterimResult.FrontRight = raceCar.Distance.FrontRight;
+                InterimResult.Right = raceCar.Distance.Right;
+                InterimResult.Left = raceCar.Distance.Left;
+                InterimResult.MaxViewDistance = raceCar.Distance.MaxViewDistance;
+                InterimResult.Front = raceCar.Distance.Front;
+
+                // Creating new RaceCar object with copied values
+                data.Add(new RaceCar(Game.Session.Id,raceCar.Name, raceCar.Color)
+                {
+                    Name = new String(raceCar.Name),
+                    Color = new String(raceCar.Color),
+                    Position = raceCar.Position,
+                    Distance = InterimResult,
+                    Rotation = raceCar.Rotation,
+
+                }
+                );
+            }
+
+            return data;
+
+        }
+
+        private void DrawFinishPositionRaceCarWithCars(List<RaceCar> data, SpriteBatch spriteBatch)
+        {
+            var myRaceCarId = 0;
+            foreach (RaceCar raceCar in data)
+            {
+                // Making sure that a correct colour is chosen for the RaceCar
+                var color = Color.Black;
+                if (raceCar.Color.Length == 0)
+                {
+                    color = GetRaceCarColor(myRaceCarId);
+                }
+                else
+                {
+                    color = GetRaceCarColorFromString(raceCar);
+                }
+
+                // Drawing the individual Cars & Distance lights
+                DrawSingleCar(raceCar, color, spriteBatch);
+                DrawDinstanceLines(raceCar, color, spriteBatch);
+
+                // Counter to add additional colours, if needed.                
+                myRaceCarId += 1;
+
+            }
+
+        }
+        private void DrawRaceFinishedButton()
+        {
+            _raceFinishedButton = new Button(_buttonTextureRed, _font, _scaleFactor)
+            {
+                Position = new Vector2(LayoutUtility.screenWidth/2 - _buttonWidth/2, LayoutUtility.screenHeight/2 - _buttonHeight),
+                Height = _buttonHeight*2,
+                Width = _buttonWidth,
+                Text = "Race finished! Press Button/Esc to exit Game!",
+            };
+            _raceFinishedButton.Click += RaceFinishedButton_Click;
+            _components.Add(_raceFinishedButton);
+        }
+        private void RaceFinishedButton_Click(object sender, EventArgs e)
+        {
+            Logger.LogInformation("RankingState");
+            var rankingState = _stateFactory.CreateState<IRankingState<RankingStateOptions>, RankingStateOptions>(GraphicsDevice, Content);
+            Game.ChangeState(rankingState);
+        }
+
+        private void DrawFinishRaceButton()
+        {
+            _finishRaceButton = new Button(_buttonTexture, _font, _scaleFactor)
+            {
+                Position = new Vector2(11 * _font.MeasureString("A").X + LayoutUtility.widthPx(0.25), 10),
+                Height = _buttonHeight,
+                Width = _modelButtonWidth,
+                Text = "Finish race",
+            };
+            _finishRaceButton.Click += FinishRaceButtonButton_Click;
+            _components.Add(_finishRaceButton);
+        }
+
+        private void FinishRaceButtonButton_Click(object sender, EventArgs e)
+        {
+            // Setting .isFinished for session to true
+            _sessionService.FinishRace(new GuidData { GuidString = Game.Session.Id.ToString() });
+            //closing open streamwriter           
+            if (_dataWriter is not null)
+            {
+                _dataWriter.Close();
+            }
+            // Waiting 100 MS for clients to request new state of .isFinished for Session
+            Thread.Sleep(100);
+            
+            // Removing Player RaceCar
+            _raceCarList.Remove(_raceCar);
+            _gameService.DestroyRaceCarAsync(_raceCar);
+
+            // Removing other RaceCars
+            for (int i = _raceCarList.Count - 1; i >= 0; i--)
+            {
+                RaceCar raceCar = _raceCarList.ElementAt(i);
+                _raceCarList.RemoveAt(i);
+                _gameService.DestroyRaceCarAsync(raceCar);
+            }
+            _finishRaceButton.Clicked = false;
         }
     }
 }
