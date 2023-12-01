@@ -393,7 +393,7 @@ namespace Matlabs.OwlRacer.GameClient.States
             spriteBatch.DrawString(_font, $"Logged in as: {typePlayer}", new Vector2(_trackWidth / 2 - 40, 20 + _font.MeasureString("A").Y), Color.Black, (float)0.0, new Vector2(0, 0), _scaleFactor, SpriteEffects.None, (float)0.0);
             //DrawRankingText(spriteBatch, 10, 300, _raceCarList);
 
-            Rectangle finishFlagRect = new Rectangle(11 * (int)_font.MeasureString("A").X + LayoutUtility.widthPx(0.25) + _modelButtonWidth - _buttonHeight, 10, _buttonHeight, _buttonHeight);
+            Rectangle finishFlagRect = new Rectangle(60 * (int)_font.MeasureString("A").X + LayoutUtility.widthPx(0.25) + _modelButtonWidth - _buttonHeight, 10, _buttonHeight, _buttonHeight);
 
             if(Game.IsAdmin == true)
             {
@@ -440,7 +440,7 @@ namespace Matlabs.OwlRacer.GameClient.States
 
             spriteBatch.Draw(
                 _startPhaseTextures[phase],
-                new Rectangle(11*fontWidth, 10, LayoutUtility.widthPx(0.25), LayoutUtility.heightPx(1)),
+                new Rectangle(67*fontWidth, 10, LayoutUtility.widthPx(0.25), LayoutUtility.heightPx(1)),
                 Color.White);
         }
 
@@ -1220,6 +1220,8 @@ namespace Matlabs.OwlRacer.GameClient.States
                 Position = new Vector2(pos_x, pos_y),
                 Height = _buttonHeight,
                 Width = _modelButtonWidth,
+                ButtonColor = new Color(55, 114, 182),
+                Clicked = true
             };
 
             modelCarButton.Click += ModelCarButton_Click;
@@ -1447,7 +1449,7 @@ namespace Matlabs.OwlRacer.GameClient.States
         {
             _finishRaceButton = new Button(_buttonTexture, _font, _scaleFactor)
             {
-                Position = new Vector2(11 * _font.MeasureString("A").X + LayoutUtility.widthPx(0.25), 10),
+                Position = new Vector2(60 * _font.MeasureString("A").X + LayoutUtility.widthPx(0.25), 10),
                 Height = _buttonHeight,
                 Width = _modelButtonWidth,
                 Text = "Finish race",
