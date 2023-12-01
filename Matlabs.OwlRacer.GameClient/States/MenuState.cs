@@ -149,7 +149,7 @@ namespace Matlabs.OwlRacer.GameClient.States
         {
             base.Initialize(graphicsDevice, content, options);
             Game.IsSpectator = false;
-            Game.IsAdmin = false;
+            Game.IsAdmin = true;
             _drawRanking = false;
             _startPosCarX = 0;
             _startPosCarY = 0;
@@ -227,7 +227,7 @@ namespace Matlabs.OwlRacer.GameClient.States
             _playerButton = new Button(_buttonTexture, _buttonFont, _scaleFactor)
             {
                 Position = LayoutUtility.VectorPosXY(0,1),
-                Text = "",
+                Text = "OwlRacerPlayer",
                 ButtonColor = Color.White,
                 Width = _buttonWidth,
                 Height = _buttonHeight,
@@ -238,7 +238,7 @@ namespace Matlabs.OwlRacer.GameClient.States
             _sessionNameButton = new Button(_buttonTexture, _buttonFont, _scaleFactor)
             {
                 Position = LayoutUtility.VectorPosXY(1, 1),
-                Text = "",
+                Text = "OwlRacerSession",
                 Width = _buttonWidth,
                 Height = _buttonHeight
             };
@@ -330,8 +330,8 @@ namespace Matlabs.OwlRacer.GameClient.States
                 Position = LayoutUtility.VectorPosXY(0.5, 4),
                 Height = _buttonHeight,
                 Width = _buttonWidth / 2,
-                ButtonColor = Color.White,
-                Text ="Off",
+                ButtonColor = new Color(55, 114, 182),
+                Text ="On",
             };
             _adminModeButton.Click += adminModeButton_Click;
 
@@ -792,15 +792,15 @@ namespace Matlabs.OwlRacer.GameClient.States
         private void adminModeButton_Click(object sender, EventArgs e)
         {
             Game.IsAdmin = !Game.IsAdmin;
-            if(Game.IsAdmin == true)
-            {
-                _adminModeButton.Text = "On";
-                _adminModeButton.Clicked = true;
-            }
-            else
+            if(!Game.IsAdmin)
             {
                 _adminModeButton.Text = "Off";
                 _adminModeButton.Clicked = false;
+            }
+            else
+            {
+                _adminModeButton.Text = "On";
+                _adminModeButton.Clicked = true;
             }
         }
 
